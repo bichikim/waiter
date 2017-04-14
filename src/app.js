@@ -18,28 +18,26 @@ export default class Waiter {
 
     /**
      * 모든 함수 시작
-     * @param execute_list
-     * @param addedArguments
      * @returns {{}}
+     * @param option
      */
-    execute(execute_list,addedArguments) {
+    execute(option) {
         //if Waiter has call_object to bind
-
-        let isExecute_list = _.isObject(execute_list),
+        let isOption = _.isObject(option),
             returnObject = {};
 
         //모든 함수 실행
         _.forEach(this._callbacks, function (value) {
             let doExecute = false;
-            if(isExecute_list){
-                if(!_.isNil(execute_list[value.name]) && execute_list[value.name]){
+            if(isOption){
+                if(!_.isNil(option[value.name]) && option[value.name].operate){
                     doExecute = true;
                 }
             }else{
                 doExecute = true;
             }
             if(doExecute){
-                returnObject[value.name] = this._executeOne(value, addedArguments);
+                returnObject[value.name] = this._executeOne(value, _.isNil(option[value.name])?[]:option[value.name]);
             }
             return true;
         }.bind(this));
@@ -54,11 +52,11 @@ export default class Waiter {
     /**
      * excute one of callbacks
      * @param value
-     * @param addedArguments
+     * @param option
      * @returns {*}
      * @private
      */
-    _executeOne(value, addedArguments) {
+    _executeOne(value, option) {
         if (!_.isFunction(value.callback)) {
             //만약 callback이 함수가 아니라 작동이 안되면 한번만 실행 한는 것을 무조건 참으로 바꾸어
             //마지막 fire가 끝나고 삭제 되도록 한다.
@@ -75,12 +73,23 @@ export default class Waiter {
             myBind = this._bind_object;
         }
 
-        if(_.isArray(addedArguments)){
-            myArgument = addedArguments
+        if(_.isArray(option.arguments)){
+            myArgument = option.arguments
         }else if(_.isArray(value.argument)){
             myArgument = value.argument;
         }else {
             myArgument = this._arguments;
+        }
+
+        if(_.isArray(option.additionalArguments)){
+            myArgument = _.union(myArgument,option.additionalArguments);
+        }
+
+
+        if(_.isObject(option.bind)){
+            _.forEach(option.bind, function (value, name) {
+                myBind[name] = value;
+            });
         }
 
         //returned = value.callback.apply(value.bind, this._arguments);
