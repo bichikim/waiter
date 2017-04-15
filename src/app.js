@@ -87,9 +87,13 @@ export default class Waiter {
 
 
         if(_.isObject(option.bind)){
-            _.forEach(option.bind, function (value, name) {
-                myBind[name] = value;
-            });
+            if(_.isNil(myBind)){
+                myBind = option.bind;
+            }else {
+                _.forEach(option.bind, function (value, name) {
+                    myBind[name] = value;
+                });
+            }
         }
 
         //returned = value.callback.apply(value.bind, this._arguments);
