@@ -29,15 +29,15 @@ export default class Waiter {
         //모든 함수 실행
         _.forEach(this._callbacks, function (value) {
             let doExecute = false;
-            if(isOption){
-                if(!_.isNil(option[value.name]) && option[value.name].operate){
+            if (isOption) {
+                if (!_.isNil(option[value.name]) && option[value.name].operate) {
                     doExecute = true;
                 }
-            }else{
+            } else {
                 doExecute = true;
             }
-            if(doExecute){
-                returnObject[value.name] = this._executeOne(value, _.isNil(option[value.name])?[]:option[value.name]);
+            if (doExecute) {
+                returnObject[value.name] = this._executeOne(value, _.isNil(option[value.name]) ? [] : option[value.name]);
             }
             return true;
         }.bind(this));
@@ -65,36 +65,39 @@ export default class Waiter {
         }
 
         let myArgument,
-            myBind;
-        //내장 바인드 > 전역 바인드
-        if (_.isObject(value.bind)) {
-            myBind = value.bind;
-        } else {
-            myBind = this._bind_object;
+            myBind = {};
+        //실행지 지정 >내장 바인드 > 전역 바인드 ..모두 겹쳐진다.
+
+        if (_.isObject(this._bind_object)) {
+            _.forEach( this._bind_object, function (value, name) {
+                myBind[name] = value;
+            });
         }
 
-        if(_.isArray(option.arguments)){
+        if (_.isObject(value.bind)) {
+            _.forEach( value.bind, function (value, name) {
+                myBind[name] = value;
+            });
+        }
+
+        if (_.isObject(option.bind)) {
+            _.forEach(option.bind, function (value, name) {
+                myBind[name] = value;
+            });
+        }
+
+        if (_.isArray(option.arguments)) {
             myArgument = option.arguments
-        }else if(_.isArray(value.argument)){
+        } else if (_.isArray(value.argument)) {
             myArgument = value.argument;
-        }else {
+        } else {
             myArgument = this._arguments;
         }
 
-        if(_.isArray(option.additionalArguments)){
-            myArgument = _.union(myArgument,option.additionalArguments);
+        if (_.isArray(option.additionalArguments)) {
+            myArgument = _.union(myArgument, option.additionalArguments);
         }
 
-
-        if(_.isObject(option.bind)){
-            if(_.isNil(myBind)){
-                myBind = option.bind;
-            }else {
-                _.forEach(option.bind, function (value, name) {
-                    myBind[name] = value;
-                });
-            }
-        }
 
         //returned = value.callback.apply(value.bind, this._arguments);
         //함수 실행 후 리턴 값
@@ -141,7 +144,7 @@ export default class Waiter {
      * @param my_argument_object
      * @returns {boolean}
      */
-    save(callback, name, ones, my_bind_object,my_argument_object) {
+    save(callback, name, ones, my_bind_object, my_argument_object) {
         if (!_.isFunction(callback)) {
             return false;
         }
