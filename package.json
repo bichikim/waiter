@@ -2,9 +2,10 @@
   "name": "bichi-waiter",
   "version": "1.0.8",
   "description": "",
-  "main": "./src/app.js",
+  "main": "./index.js",
   "scripts": {
     "build": "webpack --config webpack.config.prod.js",
+    "test": "webpack --config webpack_dev.config.prod.js",
     "dev": "webpack-dev-server"
   },
   "repository": {
@@ -29,8 +30,5 @@
     "sass-loader": "^6.0.3",
     "style-loader": "^0.16.0",
     "webpack": "^2.3.2"
-  },
-  "dependencies": {
-    "core-js": "^0.6.0"
   }
 }
