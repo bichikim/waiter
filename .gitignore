@@ -16,3 +16,4 @@ _ide_helper.php
 _ide_helper_models.php
 npm-debug.log
 webpack.config.prod.js
+webpack_dev.config.prod.js
