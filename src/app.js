@@ -14,10 +14,17 @@ export default class Waiter {
         this._callbacks = [];
         this._arguments = [];
         this._bind_object = undefined;
+        this._defaultOperate = true;
+    }
+
+    set defaultOperate(operate){
+        if(_.isBoolean(operate)){
+            this.defaultOperate = operate;
+        }
     }
 
     /**
-     * 모든 함수 시작
+     *
      * @returns {{}}
      * @param option
      */
@@ -32,6 +39,8 @@ export default class Waiter {
             if (isOption) {
                 if (!_.isNil(option[value.name]) && option[value.name].operate) {
                     doExecute = true;
+                }else if(_.isNil(option[value.name])){
+                    doExecute = this._defaultOperate ;
                 }
             } else {
                 doExecute = true;
@@ -42,7 +51,7 @@ export default class Waiter {
             return true;
         }.bind(this));
 
-        //오브젝트 자식 값이 ones 가 참인 것은 한번만 실행 함으로 제거
+
         _.remove(this._callbacks, 'ones');
 
         //return all result with each callback's name
@@ -58,15 +67,14 @@ export default class Waiter {
      */
     _executeOne(value, option) {
         if (!_.isFunction(value.callback)) {
-            //만약 callback이 함수가 아니라 작동이 안되면 한번만 실행 한는 것을 무조건 참으로 바꾸어
-            //마지막 fire가 끝나고 삭제 되도록 한다.
+
             value.ones = true;
             return true;
         }
 
         let myArgument,
             myBind = {};
-        //실행지 지정 >내장 바인드 > 전역 바인드 ..모두 겹쳐진다.
+
 
         if (_.isObject(this._bind_object)) {
             _.forEach( this._bind_object, function (value, name) {
@@ -100,7 +108,7 @@ export default class Waiter {
 
 
         //returned = value.callback.apply(value.bind, this._arguments);
-        //함수 실행 후 리턴 값
+
         return value.callback.apply(myBind, myArgument);
     }
 
