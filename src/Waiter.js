@@ -288,7 +288,7 @@ export default class Waiter {
     }
 
     /**
-     *
+     * Assemble Bind all this._bind, callback bind, option bind
      * @param ownBind
      * @param optionBind
      * @return {Object}
