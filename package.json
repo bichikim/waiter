@@ -1,34 +1,40 @@
 {
   "name": "bichi-waiter",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "",
   "main": "./index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.prod.js",
-    "test": "webpack --config webpack_dev.config.prod.js",
-    "dev": "webpack-dev-server"
+    "production": "webpack --config webpack.config.prod.js",
+    "production-min": "webpack --hide-modules --config=webpack.config.prod_min.js",
+    "watch": "webpack --config webpack.config.watch.js",
+    "dev": "webpack --config webpack.config.dev.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bichikim/waiter.git"
   },
   "author": "bichi",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/bichikim/waiter/issues"
   },
   "homepage": "https://github.com/bichikim/waiter#readme",
   "devDependencies": {
-    "babel-core": "^6.24.0",
+    "babel": "^6.23.0",
+    "babel-core": "^6.24.1",
     "babel-loader": "^6.4.1",
-    "babel-preset-env": "^1.2.2",
-    "babel-preset-es2015": "^6.24.0",
+    "babel-preset-env": "^1.4.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-es2016": "^6.24.1",
     "babel-watch": "^2.0.6",
-    "css-loader": "^0.27.3",
+    "color-string": "^1.5.2",
+    "css-loader": "^0.28.0",
     "lodash": "^4.17.4",
     "node-sass": "^4.5.1",
     "sass-loader": "^6.0.3",
     "style-loader": "^0.16.0",
-    "webpack": "^2.3.2"
-  }
+    "uglifyjs-webpack-plugin": "^0.4.3",
+    "webpack": "^2.4.1"
+  },
+  "dependencies": {}
 }
