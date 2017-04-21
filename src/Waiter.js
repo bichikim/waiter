@@ -65,7 +65,7 @@ export default class Waiter {
         //Make Object to contain returning results with callback names
         const returnObject = {},
             executeOne = (value, options) => {
-                const bindAndArguments = this._getBindAndArgument(value, options);
+                const bindAndArguments = this._getBindAndArguments(value, options);
                 return value.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
             };
 
@@ -93,7 +93,7 @@ export default class Waiter {
      * @return {{arguments: Array, bind: Object}}
      * @private
      */
-    _getBindAndArgument(value, options) {
+    _getBindAndArguments(value, options) {
         let myArguments = null,
             myBind = null;
         if (_.isObject(options)) {
@@ -146,7 +146,7 @@ export default class Waiter {
                     }
 
                     if (refresh) {
-                        const bindAndArguments = this._getBindAndArgument(callback, options[callback.name]);
+                        const bindAndArguments = this._getBindAndArguments(callback, options[callback.name]);
 
                         //Make and push Promise
                         const promise = (function () {
