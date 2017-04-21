@@ -1,12 +1,12 @@
 # The Waiter 
 ## When you need a solution execute many function at one, it helps you!
 
-##Installation
+## Installation
 Please use ^1.0.11
 ````bash
 npm install --save bichi-waiter
 ````
-##use synchrony
+## use synchrony
 ```javascript
 import Waiter from 'bichi-waiter';
 const waiter = new Waiter();
@@ -100,7 +100,7 @@ console.log(waiter.execute(option));
 
 console.log('It will be shown after execute result!');
 ```
-#use asynchronously
+## use asynchronously
 ```javascript
 import Waiter from 'bichi-waiter';
 const waiter = new Waiter();
