@@ -1,5 +1,5 @@
 # The Waiter 
-## When you need a solution execute many function at one, it helps you!
+## When you need a solution execute many function at ones, it helps you!
 
 ## Installation
 Please use ^1.0.11
