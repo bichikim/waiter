@@ -56,7 +56,7 @@ export default class Waiter {
 
     /**
      * Execute functions in this._callbacks options
-     * @returns {Array}
+     * @returns {Object}
      *              Array structure => [ 'callbacks name 1' : 'result', 'callbacks name 2' : 'result', 'callbacks name 3' : 'result', ... ]
      * @param {{ operate : Object, arguments : Array, additionalArguments : Array, bind : Object }} [options]
      *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
@@ -93,22 +93,22 @@ export default class Waiter {
      * @return {{arguments: Array, bind: Object}}
      * @private
      */
-    _getBindAndArgument(value, options){
+    _getBindAndArgument(value, options) {
         let myArguments = null,
             myBind = null;
-        if(_.isObject(options)){
+        if (_.isObject(options)) {
             myArguments = this._pickArguments(
-                _.isArray(value.argument)?value.argument: null,
-                _.isArray(options.arguments)? options.arguments: null,
-                _.isArray(options.additionalArguments)? options.additionalArguments : null);
-            myBind = this._assembleBind(value.bind, _.isObject(options.bind)? options.bind: null);
-        }else{
+                _.isArray(value.arguments) ? value.arguments : null,
+                _.isArray(options.arguments) ? options.arguments : null,
+                _.isArray(options.additionalArguments) ? options.additionalArguments : null);
+            myBind = this._assembleBind(value.bind, _.isObject(options.bind) ? options.bind : null);
+        } else {
             myArguments = this._pickArguments(value.arguments);
-            myBind = value.bind;
+            myBind = this._assembleBind(value.bind);
         }
         return {
-            arguments : myArguments,
-            bind : myBind,
+            arguments: myArguments,
+            bind: myBind,
         }
     }
 
@@ -125,28 +125,29 @@ export default class Waiter {
         //Keys to set name to make result Objects
         const keys = [];
         //Make async function to execute all this._callbacks
-        const async = async ()=> {
+        const async = async () => {
             //Promises to add in Promise.all to execute all asynchronously
             const promises = [];
 
-            _.forEach(this._callbacks, (callback, key)=>{
+            _.forEach(this._callbacks, (callback) => {
                 //If It should execute by option.
-                if(this._isExecute(options, callback.name)) {
+                if (this._isExecute(options, callback.name)) {
                     keys.push(callback.name);
                     //Assemble bind
 
                     //checking need to make new promise
                     let refresh = false;
-                    if(_.isNil(callback.promise)){
+                    if (_.isNil(callback.promise)) {
                         refresh = true;
-                    }else if(_.isObject(options[callback.name])){
-                        if(_.isObject(options[callback.name.bind]) || _.isObject(options[callback.name.arguments])){
+                    } else if (_.isObject(options[callback.name])) {
+                        if (_.isObject(options[callback.name.bind]) || _.isObject(options[callback.name.arguments])) {
                             refresh = true;
                         }
                     }
 
-                    if(refresh){
+                    if (refresh) {
                         const bindAndArguments = this._getBindAndArgument(callback, options[callback.name]);
+
                         //Make and push Promise
                         const promise = (function () {
                             return new Promise((resolve, reject) => {
@@ -155,21 +156,24 @@ export default class Waiter {
                                     //Execute One
                                     result = callback.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
                                 } catch (reason) {
+                                    reason.name = callback.name;
                                     reject(reason);
-                                    //Stop this
-                                    return;
                                 }
                                 resolve(result);
                             });
                         })();
                         callback.promise = promise;
                         promises.push(promise);
-                    }else {
+                    } else {
                         promises.push(callback.promise);
                     }
                 }
             });
             //Execute all
+            if(_.isFunction(errorCallback)){
+                //There something wrong with async. It must be caught here not on afterAsync
+                return await Promise.all(promises).catch(reason => errorCallback(reason));
+            }
             return await Promise.all(promises);
         };
 
@@ -177,10 +181,10 @@ export default class Waiter {
         //Execute all asynchronously
         let afterAsync = async();
         //Set result callback if it has
-        if(_.isFunction(resultCallback)){
+        if (_.isFunction(resultCallback)) {
             afterAsync.then((results) => {
                 const returns = {};
-                _.forEach(results,(result, index)=>{
+                _.forEach(results, (result, index) => {
                     returns[keys[index]] = result;
                 });
                 resultCallback(returns);
@@ -188,11 +192,6 @@ export default class Waiter {
                 this._remove();
             });
         }
-        //Set error callback if it has
-        if(_.isFunction(errorCallback)){
-            afterAsync.catch(reason  => errorCallback(reason ));
-        }
-
     }
 
 
@@ -242,7 +241,7 @@ export default class Waiter {
             ones: _.isBoolean(ones) ? ones : false,
             bind: _.isObject(my_bind_object) ? my_bind_object : null,
             arguments: _.isArray(my_argument_array) ? my_argument_array : null,
-            promise : null,
+            promise: null,
         });
         return true;
     }
@@ -251,7 +250,7 @@ export default class Waiter {
      * Remove name of callback item
      * @param name
      */
-    remove(name){
+    remove(name) {
         return _.remove(this._callbacks, function (value) {
             return value.name === name;
         })
@@ -350,15 +349,19 @@ export default class Waiter {
      * @private
      */
     _isExecute(options, name) {
+
         if (_.isObject(options)) {
             if (_.isObject(options[name])) {
                 if (_.isBoolean(options[name].operate) && options[name].operate) {
                     return true;
+                }else if(!_.isBoolean(options[name].operate)){
+                    return this._defaultOperate;
                 }
-                return this._defaultOperate;
+                return false;
             }
         }
         return true;
+
     }
 
 
@@ -366,7 +369,7 @@ export default class Waiter {
      * Do Removing action
      * @private
      */
-    _remove(){
+    _remove() {
         _.remove(this._callbacks, 'ones');
     }
 

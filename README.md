@@ -11,104 +11,202 @@ npm install --save bichi-waiter
 import Waiter from 'bichi-waiter';
 const waiter = new Waiter();
 const callbacks = {
-    sayHello:{
+    sayHello: {
         callback(){
-            return 'Hello' 
+            return 'Hello'
         }
     },
-    sayHelloOnes:{
+    sayHelloOnes: {
         callback(){
-             return 'Hello' 
+            return 'Hello'
         },
         ones: true,
     },
-    wontSayHelloByExecuteOption:{
+    sayHelloWithOperateFalseOption: {
         callback(){
-            return 'Hello' 
+            //It won't say hello
+            return 'Hello'
         },
     },
-    sayHelloGlobalBind:{
+    sayHelloGlobalBind: {
         callback(){
             return `Hello ${this.name}`;
-        }
+        },
     },
-    sayHelloLocalBind:{
+    sayHelloLocalBind: {
         callback(){
             return `Hello ${this.name_local}`;
         },
-        bind:{
+        bind: {
             name_local: 'foo_local'
+        },
+    },
+    sayHelloGlobalArguments: {
+        callback(name){
+            return `Hello ${name}`
+        },
+    },
+    sayHelloLoLocalArguments: {
+        callback(name1, name2){
+            return `hello ${name1}, ${name2}`
+        },
+        arguments:['Local argument 1', 'Local argument 2']
+    },
+    sayHelloExecuteBind: {
+        callback(){
+            return `Hello ${this.name}`
+        },
+    },
+    sayHelloExecuteArguments: {
+        callback(name){
+            return `Hello ${name}`
+        },
+    },
+    sayHelloExecuteAdditionalArguments: {
+        callback(GlobalName, additionalName){
+            return `Hello ${GlobalName}, ${additionalName}`
+        },
+    },
+};
+
+waiter.saveMany(callbacks);
+
+//This is global bind
+waiter.bind({
+    name: 'Global bind'
+});
+
+waiter.arguments(['Global argument']);
+
+const option = {
+    sayHelloWithOperateFalseOption: {
+        operate: false
+    },
+    sayHelloExecuteBind:{
+        bind:{
+            name : 'Execute bind'
         }
     },
-    sayHelloGlobalArguments:{
-        callback(name){
-            return `hello ${name}`
-        }
+    sayHelloExecuteArguments:{
+        arguments:['Execute argument']
+    },
+    sayHelloExecuteAdditionalArguments:{
+        additionalArguments :['Execute additional argument'],
     }
 };
 
-//this is global bind
-waiter.bind({
-    name:'foo_global'
-});
 
-waiter.arguments(['Foo argument global']);
+console.log(waiter.execute(option));
 
-console.log(waiter.execute({
-    wontSayHelloByExecuteOption:{
-        operate: false
-    }
-}));
+console.log('It will be shown after execute result!');
 ```
 #use asynchronously
 ```javascript
 import Waiter from 'bichi-waiter';
 const waiter = new Waiter();
 const callbacks = {
-    sayHello:{
+    sayHello: {
         callback(){
-            return 'Hello' 
+            return 'Hello'
         }
     },
-    sayHelloOnes:{
+    sayHelloOnes: {
         callback(){
-             return 'Hello' 
+            return 'Hello'
         },
         ones: true,
     },
-    wontSayHelloByExecuteOption:{
+    sayHelloWithOperateFalseOption: {
         callback(){
-            return 'Hello' 
+            //It won't say hello
+            return 'Hello'
         },
     },
-    sayHelloGlobalBind:{
+    sayHelloGlobalBind: {
         callback(){
             return `Hello ${this.name}`;
-        }
+        },
     },
-    sayHelloLocalBind:{
+    sayHelloLocalBind: {
         callback(){
             return `Hello ${this.name_local}`;
         },
-        bind:{
+        bind: {
             name_local: 'foo_local'
+        },
+    },
+    sayHelloGlobalArguments: {
+        callback(name){
+            return `Hello ${name}`
+        },
+    },
+    sayHelloLoLocalArguments: {
+        callback(name1, name2){
+            return `hello ${name1}, ${name2}`
+        },
+        arguments:['Local argument 1', 'Local argument 2']
+    },
+    sayHelloExecuteBind: {
+        callback(){
+            return `Hello ${this.name}`
+        },
+    },
+    sayHelloExecuteArguments: {
+        callback(name){
+            return `Hello ${name}`
+        },
+    },
+    sayHelloExecuteAdditionalArguments: {
+        callback(GlobalName, additionalName){
+            return `Hello ${GlobalName}, ${additionalName}`
+        },
+    },
+    sayHelloError: {
+        callback(){
+            throw new Error('Hello');
+        },
+    },
+};
+
+waiter.saveMany(callbacks);
+
+//This is global bind
+waiter.bind({
+    name: 'Global bind'
+});
+
+waiter.arguments(['Global argument']);
+
+const option = {
+    sayHelloWithOperateFalseOption: {
+        operate: false
+    },
+    sayHelloExecuteBind:{
+        bind:{
+            name : 'Execute bind'
         }
     },
-    sayHelloGlobalArguments:{
-        callback(name){
-            return `hello ${name}`
-        }
+    sayHelloExecuteArguments:{
+        arguments:['Execute argument']
+    },
+    sayHelloExecuteAdditionalArguments:{
+        additionalArguments :['Execute additional argument'],
     }
 };
 
-//this is global bind
-waiter.bind({
-    name:'foo_global'
-});
 
-waiter.arguments(['Foo argument global']);
 
-waiter.executeAsync({}, (result) => {
+ waiter.executeAsync(option, (result) => {
+ console.log(result);
+ },(reason)=>{
+ console.error(reason);
+ });
+
+/*
+waiter.executeAsync(option, (result) => {
     console.log(result);
 });
+*/
+
+console.log('It will be shown before executeAsync result!');
 ```
