@@ -200,6 +200,7 @@ const option = {
  console.log(result);
  },(reason)=>{
  console.error(reason);
+ console.log(`Error from ${reason.name}`);
  });
 
 /*
