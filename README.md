@@ -2,7 +2,7 @@
 ## When you need a solution execute many function at one, it helps you!
 
 ##Installation
-Please use ^1.0.9
+Please use ^1.0.11
 ````bash
 npm install --save bichi-waiter
 ````
