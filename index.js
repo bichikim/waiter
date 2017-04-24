@@ -129,7 +129,7 @@ var Waiter = function () {
          *                  Function structure => function(results) {}
          *                  Results parameter structure => Same as execute's returning object
          * @param {Function} [errorCallback]
-         *                  Function structure => function(reason) {*}
+         *                  Function structure => function(reason) {}
          */
 
     }, {
@@ -137,7 +137,7 @@ var Waiter = function () {
         value: function executeAsync(options, resultCallback, errorCallback) {
             var _this2 = this;
 
-            //Keys to set name to make result Objects
+            //For returning result names
             var keys = [];
             //Make async function to execute all this._callbacks
             var async = async function async() {
@@ -146,11 +146,11 @@ var Waiter = function () {
                 _lodash2.default.forEach(_this2._callbacks, function (callback) {
                     //If It should execute by option.
                     if (_this2._isExecute(options, callback.name)) {
+                        //Save keys for returning results
                         keys.push(callback.name);
-                        //Assemble bind
-
-                        //checking need to make new promise
+                        //Checks if a callback needs to make new promise or not
                         var refresh = false;
+
                         if (_lodash2.default.isNil(callback.promise)) {
                             refresh = true;
                         } else if (_lodash2.default.isObject(options[callback.name])) {
@@ -161,7 +161,6 @@ var Waiter = function () {
 
                         if (refresh) {
                             var bindAndArguments = _this2._getBindAndArguments(callback, options[callback.name]);
-
                             //Make and push Promise
                             var promise = function () {
                                 return new Promise(function (resolve, reject) {
@@ -195,6 +194,7 @@ var Waiter = function () {
 
             //Execute all asynchronously
             var afterAsync = async();
+
             //Set result callback if it has
             if (_lodash2.default.isFunction(resultCallback)) {
                 afterAsync.then(function (results) {
@@ -221,15 +221,19 @@ var Waiter = function () {
             if (!_lodash2.default.isObject(objects)) {
                 return false;
             }
+
             _lodash2.default.forEach(objects, function (value, key) {
                 if (!_lodash2.default.isObject(value)) {
                     return true;
                 }
+
                 if (!_lodash2.default.isFunction(value.callback)) {
                     return true;
                 }
+
                 this.save(value.callback, key, value.ones, value.bind, value.arguments);
             }.bind(this));
+
             return true;
         }
 
@@ -283,7 +287,10 @@ var Waiter = function () {
         value: function bind(my_bind_object) {
             if (_lodash2.default.isObject(my_bind_object)) {
                 this._bind_object = my_bind_object;
+                return true;
             }
+
+            return false;
         }
 
         /**
@@ -296,7 +303,10 @@ var Waiter = function () {
         value: function _arguments(array) {
             if (_lodash2.default.isArray(array)) {
                 this._arguments = array;
+                return true;
             }
+
+            return false;
         }
 
         /**
@@ -307,10 +317,9 @@ var Waiter = function () {
     }, {
         key: 'clear',
         value: function clear() {
-            _lodash2.default.remove(this._callbacks, function () {
+            return _lodash2.default.remove(this._callbacks, function () {
                 return true;
             });
-            return false;
         }
 
         /**
@@ -343,6 +352,7 @@ var Waiter = function () {
                     myBind[name] = value;
                 });
             }
+
             return myBind;
         }
 
@@ -359,6 +369,7 @@ var Waiter = function () {
         key: '_pickArguments',
         value: function _pickArguments(ownArguments, optionArguments, optionAdditionalArguments) {
             var myArgument = void 0;
+
             if (_lodash2.default.isArray(optionArguments)) {
                 myArgument = optionArguments;
             } else if (_lodash2.default.isArray(ownArguments)) {
@@ -370,6 +381,7 @@ var Waiter = function () {
             if (_lodash2.default.isArray(optionAdditionalArguments)) {
                 myArgument = _lodash2.default.union(myArgument, optionAdditionalArguments);
             }
+
             return myArgument;
         }
 
@@ -384,7 +396,6 @@ var Waiter = function () {
     }, {
         key: '_isExecute',
         value: function _isExecute(options, name) {
-
             if (_lodash2.default.isObject(options)) {
                 if (_lodash2.default.isObject(options[name])) {
                     if (_lodash2.default.isBoolean(options[name].operate) && options[name].operate) {
@@ -395,11 +406,12 @@ var Waiter = function () {
                     return false;
                 }
             }
+
             return true;
         }
 
         /**
-         * Do Removing action
+         * Remove callbacks which operate one time;
          * @private
          */
 
@@ -413,7 +425,7 @@ var Waiter = function () {
         set: function set(operate) {
             if (_lodash2.default.isBoolean(operate)) {
                 this.defaultOperate = operate;
-            } //else ... Need throw error
+            }
         }
 
         /**
