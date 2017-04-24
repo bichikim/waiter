@@ -1,11 +1,10 @@
 {
   "name": "bichi-waiter",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
   "main": "./index.js",
   "scripts": {
-    "production": "babel ./src/Waiter.js --out-file ./index.js",
-    "production-min": "webpack --hide-modules --config=webpack.config.prod_min.js",
+    "production": "babel ./src/app.js --out-file ./index.js",
     "watch": "webpack --config webpack.config.watch.js",
     "dev": "webpack --config webpack.config.dev.js"
   },
