@@ -1,6 +1,6 @@
 {
   "name": "bichi-waiter",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "",
   "main": "./index.js",
   "scripts": {
@@ -34,5 +34,7 @@
     "uglifyjs-webpack-plugin": "^0.4.3",
     "webpack": "^2.4.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.4"
+  }
 }

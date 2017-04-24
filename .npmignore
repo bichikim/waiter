@@ -2,6 +2,7 @@
 /src
 /test
 /node_modules
+.babelrc
 .eslintrc.js
 npm-debug.log
 webpack.config.dev.js
