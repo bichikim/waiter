@@ -44,7 +44,7 @@ export default class Waiter {
     set defaultOperate(operate) {
         if (_.isBoolean(operate)) {
             this.defaultOperate = operate;
-        }//else ... Need throw error
+        }
     }
 
     /**
@@ -120,10 +120,10 @@ export default class Waiter {
      *                  Function structure => function(results) {}
      *                  Results parameter structure => Same as execute's returning object
      * @param {Function} [errorCallback]
-     *                  Function structure => function(reason) {*}
+     *                  Function structure => function(reason) {}
      */
     executeAsync(options, resultCallback, errorCallback) {
-        //Keys to set name to make result Objects
+        //For returning result names
         const keys = [];
         //Make async function to execute all this._callbacks
         const async = async () => {
@@ -132,11 +132,11 @@ export default class Waiter {
             _.forEach(this._callbacks, (callback) => {
                 //If It should execute by option.
                 if (this._isExecute(options, callback.name)) {
+                    //Save keys for returning results
                     keys.push(callback.name);
-                    //Assemble bind
-
-                    //checking need to make new promise
+                    //Checks if a callback needs to make new promise or not
                     let refresh = false;
+
                     if (_.isNil(callback.promise)) {
                         refresh = true;
                     } else if (_.isObject(options[callback.name])) {
@@ -147,7 +147,6 @@ export default class Waiter {
 
                     if (refresh) {
                         const bindAndArguments = this._getBindAndArguments(callback, options[callback.name]);
-
                         //Make and push Promise
                         const promise = (function () {
                             return new Promise((resolve, reject) => {
@@ -177,9 +176,9 @@ export default class Waiter {
             return await Promise.all(promises);
         };
 
-
         //Execute all asynchronously
         let afterAsync = async();
+
         //Set result callback if it has
         if (_.isFunction(resultCallback)) {
             afterAsync.then((results) => {
@@ -204,13 +203,16 @@ export default class Waiter {
         if (!_.isObject(objects)) {
             return false;
         }
+
         _.forEach(objects, function (value, key) {
             if (!_.isObject(value)) {
                 return true;
             }
+
             if (!_.isFunction(value.callback)) {
                 return true;
             }
+
             this.save(
                 value.callback,
                 key,
@@ -219,6 +221,7 @@ export default class Waiter {
                 value.arguments
             );
         }.bind(this));
+
         return true;
     }
 
@@ -253,7 +256,7 @@ export default class Waiter {
     remove(name) {
         return _.remove(this._callbacks, function (value) {
             return value.name === name;
-        })
+        });
     }
 
     /**
@@ -263,7 +266,10 @@ export default class Waiter {
     bind(my_bind_object) {
         if (_.isObject(my_bind_object)) {
             this._bind_object = my_bind_object;
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -273,7 +279,10 @@ export default class Waiter {
     arguments(array) {
         if (_.isArray(array)) {
             this._arguments = array;
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -281,10 +290,9 @@ export default class Waiter {
      * @return {Boolean}
      */
     clear() {
-        _.remove(this._callbacks, function () {
+        return _.remove(this._callbacks, function () {
             return true;
         });
-        return false;
     }
 
     /**
@@ -314,6 +322,7 @@ export default class Waiter {
                 myBind[name] = value;
             });
         }
+
         return myBind;
     }
 
@@ -327,6 +336,7 @@ export default class Waiter {
      */
     _pickArguments(ownArguments, optionArguments, optionAdditionalArguments) {
         let myArgument;
+
         if (_.isArray(optionArguments)) {
             myArgument = optionArguments
         } else if (_.isArray(ownArguments)) {
@@ -338,6 +348,7 @@ export default class Waiter {
         if (_.isArray(optionAdditionalArguments)) {
             myArgument = _.union(myArgument, optionAdditionalArguments);
         }
+
         return myArgument;
     }
 
@@ -349,7 +360,6 @@ export default class Waiter {
      * @private
      */
     _isExecute(options, name) {
-
         if (_.isObject(options)) {
             if (_.isObject(options[name])) {
                 if (_.isBoolean(options[name].operate) && options[name].operate) {
@@ -360,13 +370,13 @@ export default class Waiter {
                 return false;
             }
         }
-        return true;
 
+        return true;
     }
 
 
     /**
-     * Do Removing action
+     * Remove callbacks which operate one time;
      * @private
      */
     _remove() {
