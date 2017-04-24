@@ -2,6 +2,7 @@
  * @file Waiter.js
  * @module waiter
  */
+//noinspection JSUnresolvedVariable
 import _ from 'lodash';
 
 export default class Waiter {
@@ -128,7 +129,6 @@ export default class Waiter {
         const async = async () => {
             //Promises to add in Promise.all to execute all asynchronously
             const promises = [];
-
             _.forEach(this._callbacks, (callback) => {
                 //If It should execute by option.
                 if (this._isExecute(options, callback.name)) {

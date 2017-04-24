@@ -4,7 +4,7 @@
   "description": "",
   "main": "./index.js",
   "scripts": {
-    "production": "webpack --config webpack.config.prod.js",
+    "production": "babel ./src/Waiter.js --out-file ./index.js",
     "production-min": "webpack --hide-modules --config=webpack.config.prod_min.js",
     "watch": "webpack --config webpack.config.watch.js",
     "dev": "webpack --config webpack.config.dev.js"
@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/bichikim/waiter#readme",
   "devDependencies": {
-    "babel": "^6.23.0",
     "babel-core": "^6.24.1",
     "babel-loader": "^6.4.1",
     "babel-preset-env": "^1.4.0",
