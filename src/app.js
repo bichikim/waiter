@@ -27,7 +27,7 @@ export default class Waiter {
          * @type {null}
          * @private
          */
-        this._bind_object = null;
+        this._bind = null;
         /**
          *
          * @type {boolean}
@@ -87,31 +87,7 @@ export default class Waiter {
         return returnObject;
     }
 
-    /**
-     * Get bind and arguments
-     * @param value
-     * @param options
-     * @return {{arguments: Array, bind: Object}}
-     * @private
-     */
-    _getBindAndArguments(value, options) {
-        let myArguments = null,
-            myBind = null;
-        if (_.isObject(options)) {
-            myArguments = this._pickArguments(
-                _.isArray(value.arguments) ? value.arguments : null,
-                _.isArray(options.arguments) ? options.arguments : null,
-                _.isArray(options.additionalArguments) ? options.additionalArguments : null);
-            myBind = this._assembleBind(value.bind, _.isObject(options.bind) ? options.bind : null);
-        } else {
-            myArguments = this._pickArguments(value.arguments);
-            myBind = this._assembleBind(value.bind);
-        }
-        return {
-            arguments: myArguments,
-            bind: myBind,
-        }
-    }
+
 
     /**
      * Execute all asynchronously. Result will return with resultCallback when the latest callback is done
@@ -265,7 +241,7 @@ export default class Waiter {
      */
     bind(my_bind_object) {
         if (_.isObject(my_bind_object)) {
-            this._bind_object = my_bind_object;
+            this._bind = my_bind_object;
             return true;
         }
 
@@ -296,6 +272,32 @@ export default class Waiter {
     }
 
     /**
+     * Get bind and arguments
+     * @param value
+     * @param options
+     * @return {{arguments: Array, bind: Object}}
+     * @private
+     */
+    _getBindAndArguments(value, options) {
+        let myArguments = null,
+            myBind = null;
+        if (_.isObject(options)) {
+            myArguments = this._pickArguments(
+                _.isArray(value.arguments) ? value.arguments : null,
+                _.isArray(options.arguments) ? options.arguments : null,
+                _.isArray(options.additionalArguments) ? options.additionalArguments : null);
+            myBind = this._assembleBind(value.bind, _.isObject(options.bind) ? options.bind : null);
+        } else {
+            myArguments = this._pickArguments(value.arguments);
+            myBind = this._assembleBind(value.bind);
+        }
+        return {
+            arguments: myArguments,
+            bind: myBind,
+        }
+    }
+
+    /**
      * Assemble Bind all this._bind, callback bind, option bind
      * @param ownBind
      * @param optionBind
@@ -305,8 +307,8 @@ export default class Waiter {
     _assembleBind(ownBind, optionBind) {
         const myBind = {};
 
-        if (_.isObject(this._bind_object)) {
-            _.forEach(this._bind_object, function (value, name) {
+        if (_.isObject(this._bind)) {
+            _.forEach(this._bind, function (value, name) {
                 myBind[name] = value;
             });
         }

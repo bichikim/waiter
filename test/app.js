@@ -1,5 +1,5 @@
 /*eslint-disable comma-dangle */
-import Waiter from '../index';
+import Waiter from '../src/app';
 const waiter = new Waiter();
 
 //eslint-disable-next-line one-var

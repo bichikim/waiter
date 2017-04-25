@@ -42,7 +42,7 @@ var Waiter = function () {
          * @type {null}
          * @private
          */
-        this._bind_object = null;
+        this._bind = null;
         /**
          *
          * @type {boolean}
@@ -94,32 +94,6 @@ var Waiter = function () {
 
             //return results
             return returnObject;
-        }
-
-        /**
-         * Get bind and arguments
-         * @param value
-         * @param options
-         * @return {{arguments: Array, bind: Object}}
-         * @private
-         */
-
-    }, {
-        key: '_getBindAndArguments',
-        value: function _getBindAndArguments(value, options) {
-            var myArguments = null,
-                myBind = null;
-            if (_lodash2.default.isObject(options)) {
-                myArguments = this._pickArguments(_lodash2.default.isArray(value.arguments) ? value.arguments : null, _lodash2.default.isArray(options.arguments) ? options.arguments : null, _lodash2.default.isArray(options.additionalArguments) ? options.additionalArguments : null);
-                myBind = this._assembleBind(value.bind, _lodash2.default.isObject(options.bind) ? options.bind : null);
-            } else {
-                myArguments = this._pickArguments(value.arguments);
-                myBind = this._assembleBind(value.bind);
-            }
-            return {
-                arguments: myArguments,
-                bind: myBind
-            };
         }
 
         /**
@@ -286,7 +260,7 @@ var Waiter = function () {
         key: 'bind',
         value: function bind(my_bind_object) {
             if (_lodash2.default.isObject(my_bind_object)) {
-                this._bind_object = my_bind_object;
+                this._bind = my_bind_object;
                 return true;
             }
 
@@ -323,6 +297,32 @@ var Waiter = function () {
         }
 
         /**
+         * Get bind and arguments
+         * @param value
+         * @param options
+         * @return {{arguments: Array, bind: Object}}
+         * @private
+         */
+
+    }, {
+        key: '_getBindAndArguments',
+        value: function _getBindAndArguments(value, options) {
+            var myArguments = null,
+                myBind = null;
+            if (_lodash2.default.isObject(options)) {
+                myArguments = this._pickArguments(_lodash2.default.isArray(value.arguments) ? value.arguments : null, _lodash2.default.isArray(options.arguments) ? options.arguments : null, _lodash2.default.isArray(options.additionalArguments) ? options.additionalArguments : null);
+                myBind = this._assembleBind(value.bind, _lodash2.default.isObject(options.bind) ? options.bind : null);
+            } else {
+                myArguments = this._pickArguments(value.arguments);
+                myBind = this._assembleBind(value.bind);
+            }
+            return {
+                arguments: myArguments,
+                bind: myBind
+            };
+        }
+
+        /**
          * Assemble Bind all this._bind, callback bind, option bind
          * @param ownBind
          * @param optionBind
@@ -335,8 +335,8 @@ var Waiter = function () {
         value: function _assembleBind(ownBind, optionBind) {
             var myBind = {};
 
-            if (_lodash2.default.isObject(this._bind_object)) {
-                _lodash2.default.forEach(this._bind_object, function (value, name) {
+            if (_lodash2.default.isObject(this._bind)) {
+                _lodash2.default.forEach(this._bind, function (value, name) {
                     myBind[name] = value;
                 });
             }
