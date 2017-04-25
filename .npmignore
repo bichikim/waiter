@@ -5,5 +5,4 @@
 .babelrc
 .eslintrc.js
 npm-debug.log
-webpack.config.dev.js
 webpack.config.watch.js
