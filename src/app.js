@@ -62,7 +62,7 @@ export default class Waiter {
      * @param {{ operate : Object, arguments : Array, additionalArguments : Array, bind : Object }} [options]
      *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
      */
-    execute(options) {
+    execute(options = {}) {
         //Make Object to contain returning results with callback names
         const returnObject = {},
             executeOne = (value, options) => {
@@ -86,7 +86,6 @@ export default class Waiter {
         //return results
         return returnObject;
     }
-
 
 
     /**
@@ -145,7 +144,7 @@ export default class Waiter {
                 }
             });
             //Execute all
-            if(_.isFunction(errorCallback)){
+            if (_.isFunction(errorCallback)) {
                 //There something wrong with async. It must be caught here not on afterAsync
                 return await Promise.all(promises).catch(reason => errorCallback(reason));
             }
@@ -366,7 +365,7 @@ export default class Waiter {
             if (_.isObject(options[name])) {
                 if (_.isBoolean(options[name].operate) && options[name].operate) {
                     return true;
-                }else if(!_.isBoolean(options[name].operate)){
+                } else if (!_.isBoolean(options[name].operate)) {
                     return this._defaultOperate;
                 }
                 return false;
