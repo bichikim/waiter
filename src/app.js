@@ -115,7 +115,7 @@ export default class Waiter {
                     if (_.isNil(callback.promise)) {
                         refresh = true;
                     } else if (_.isObject(options[callback.name])) {
-                        if (_.isObject(options[callback.name.bind]) || _.isObject(options[callback.name.arguments])) {
+                        if (_.isObject(options[callback.name].bind) || _.isObject(options[callback.name].arguments)) {
                             refresh = true;
                         }
                     }
