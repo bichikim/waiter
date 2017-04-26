@@ -9716,6 +9716,12 @@ waiter.executeAsync(option, function (result) {
 window.console.log('It will be shown before executeAsync result!');
 
 setTimeout(function () {
+    waiter.executeAsync(option, function (result) {
+        window.console.log(result);
+    }, function (reason) {
+        window.console.log(reason);
+        window.console.log(reason.name);
+    });
     window.console.log(waiter.remove('sayHello'));
     window.console.log(waiter.show);
     waiter.clear();
@@ -9799,8 +9805,10 @@ var Waiter = function () {
          * @param {{ operate : Object, arguments : Array, additionalArguments : Array, bind : Object }} [options]
          *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
          */
-        value: function execute(options) {
+        value: function execute() {
             var _this = this;
+
+            var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             //Make Object to contain returning results with callback names
             var returnObject = {},
@@ -9858,7 +9866,7 @@ var Waiter = function () {
                         if (_lodash2.default.isNil(callback.promise)) {
                             refresh = true;
                         } else if (_lodash2.default.isObject(options[callback.name])) {
-                            if (_lodash2.default.isObject(options[callback.name.bind]) || _lodash2.default.isObject(options[callback.name.arguments])) {
+                            if (_lodash2.default.isObject(options[callback.name].bind) || _lodash2.default.isObject(options[callback.name].arguments)) {
                                 refresh = true;
                             }
                         }

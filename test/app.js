@@ -111,6 +111,12 @@ waiter.executeAsync(option, (result) => {
 window.console.log('It will be shown before executeAsync result!');
 
 setTimeout(() => {
+    waiter.executeAsync(option, (result) => {
+        window.console.log(result);
+    }, (reason) => {
+        window.console.log(reason);
+        window.console.log(reason.name);
+    });
     window.console.log(waiter.remove('sayHello'));
     window.console.log(waiter.show);
     waiter.clear();
