@@ -152,22 +152,17 @@ var Waiter = function () {
          *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
          */
         value: function execute() {
-            var _this = this;
-
             var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
             //Make Object to contain returning results with callback names
-            var returnObject = {},
-                executeOne = function executeOne(value, options) {
-                var bindAndArguments = _this._getBindAndArguments(value, options);
-                return value.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
-            };
+            var returnObject = {};
 
             //Execute all this._callbacks
-            _lodash2.default.forEach(this._callbacks, function (callback) {
+            _lodash2.default.forEach(this._callbacks, function (callbackObject) {
                 //If It should execute by option.
-                if (this._isExecute(options, callback.name)) {
-                    returnObject[callback.name] = executeOne(callback, options[callback.name]);
+                if (this._isExecute(options, callbackObject.name)) {
+                    var bindAndArguments = this._getBindAndArguments(callbackObject, options);
+                    returnObject[callbackObject.name] = callbackObject.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
                 }
                 //Continue
                 return true;
@@ -193,44 +188,45 @@ var Waiter = function () {
     }, {
         key: 'executeAsync',
         value: function executeAsync(options, resultCallback, errorCallback) {
-            var _this2 = this,
-                _arguments2 = arguments;
+            var _this = this;
 
             //For returning result names
             var keys = [],
                 callbacks = this._AsyncCallback();
+
             //Make async function to execute all this._callbacks
             var async = async function async() {
                 //Promises to add in Promise.all to execute all asynchronously
                 var promises = [];
-                _lodash2.default.forEach(_this2._callbacks, function (callback) {
+
+                _lodash2.default.forEach(_this._callbacks, function (callbackObject) {
+                    var name = callbackObject.name,
+                        option = options[name];
                     //If It should execute by option.
-                    if (_this2._isExecute(options, callback.name)) {
+                    if (_this._isExecute(options, name)) {
+
                         //Save keys for returning results
-                        keys.push(callback.name);
+                        keys.push(name);
+
                         //Checks if a callback needs to make new promise or not
                         var refresh = false;
-
-                        if (_lodash2.default.isNil(callback.promise)) {
+                        if (_lodash2.default.isNil(callbackObject.promise)) {
                             refresh = true;
-                        } else if (_lodash2.default.isObject(options[callback.name])) {
-                            if (_lodash2.default.isObject(options[callback.name].bind) || _lodash2.default.isObject(options[callback.name].arguments)) {
+                        } else if (_lodash2.default.isObject(option)) {
+                            if (_lodash2.default.isObject(option.bind) || _lodash2.default.isObject(option.arguments)) {
                                 refresh = true;
                             }
                         }
-
                         if (refresh) {
-                            var bindAndArguments = _this2._getBindAndArguments(callback, options[callback.name]);
                             //Make and push Promise
-                            var promise = _this2._makePromise(callback, bindAndArguments.bind, bindAndArguments, _arguments2);
-                            callback.promise = promise;
-                            promises.push(promise);
+                            callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
+                            promises.push(callbackObject.promise);
                         } else {
-                            promises.push(callback.promise);
+                            promises.push(callbackObject.promise);
                         }
                     }
                 });
-                //Execute all
+
                 if (_lodash2.default.isFunction(errorCallback)) {
                     //There something wrong with async. It must be caught here not on afterAsync
                     return await Promise.all(promises).catch(function (reason) {
@@ -247,18 +243,23 @@ var Waiter = function () {
 
             //Set result callback if it has
             if (_lodash2.default.isFunction(resultCallback)) {
+
                 afterAsync.then(function (results) {
                     var returns = {};
+
                     _lodash2.default.forEach(results, function (result, index) {
                         returns[keys[index]] = result;
                     });
+
                     resultCallback(returns);
+
                     //Remove doing ones ro etc
-                    _this2._remove();
+                    _this._remove();
                 }).then(function (results) {
                     return callbacks._result(results);
                 });
             }
+
             return callbacks;
         }
     }, {
@@ -428,16 +429,15 @@ var Waiter = function () {
 
     }, {
         key: '_getBindAndArguments',
-        value: function _getBindAndArguments(value, options) {
+        value: function _getBindAndArguments(value) {
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
             var myArguments = null,
                 myBind = null;
-            if (_lodash2.default.isObject(options)) {
-                myArguments = this._pickArguments(_lodash2.default.isArray(value.arguments) ? value.arguments : null, _lodash2.default.isArray(options.arguments) ? options.arguments : null, _lodash2.default.isArray(options.additionalArguments) ? options.additionalArguments : null);
-                myBind = this._assembleBind(value.bind, _lodash2.default.isObject(options.bind) ? options.bind : null);
-            } else {
-                myArguments = this._pickArguments(value.arguments);
-                myBind = this._assembleBind(value.bind);
-            }
+
+            myArguments = this._pickArguments(value, options);
+            myBind = this._assembleBind(value, options);
+
             return {
                 arguments: myArguments,
                 bind: myBind
@@ -446,15 +446,18 @@ var Waiter = function () {
 
         /**
          * Assemble Bind all this._bind, callback bind, option bind
-         * @param ownBind
-         * @param optionBind
+         * @param own
+         * @param options
          * @return {Object}
          * @private
          */
 
     }, {
         key: '_assembleBind',
-        value: function _assembleBind(ownBind, optionBind) {
+        value: function _assembleBind() {
+            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
             var myBind = {};
 
             if (_lodash2.default.isObject(this._bind)) {
@@ -463,14 +466,14 @@ var Waiter = function () {
                 });
             }
 
-            if (_lodash2.default.isObject(ownBind)) {
-                _lodash2.default.forEach(ownBind, function (value, name) {
+            if (_lodash2.default.isObject(own.bind)) {
+                _lodash2.default.forEach(own.bind, function (value, name) {
                     myBind[name] = value;
                 });
             }
 
-            if (_lodash2.default.isObject(optionBind)) {
-                _lodash2.default.forEach(optionBind, function (value, name) {
+            if (_lodash2.default.isObject(options.bind)) {
+                _lodash2.default.forEach(options.bind, function (value, name) {
                     myBind[name] = value;
                 });
             }
@@ -480,28 +483,30 @@ var Waiter = function () {
 
         /**
          * Pick one of argument from this_arguments, ownArguments, optionsArguments and and additionalArguments
-         * @param ownArguments
-         * @param optionArguments
-         * @param optionAdditionalArguments
+         * @param own
+         * @param options
          * @return {Array}
          * @private
          */
 
     }, {
         key: '_pickArguments',
-        value: function _pickArguments(ownArguments, optionArguments, optionAdditionalArguments) {
+        value: function _pickArguments() {
+            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
             var myArgument = void 0;
 
-            if (_lodash2.default.isArray(optionArguments)) {
-                myArgument = optionArguments;
-            } else if (_lodash2.default.isArray(ownArguments)) {
-                myArgument = ownArguments;
+            if (_lodash2.default.isArray(options.arguments)) {
+                myArgument = options.arguments;
+            } else if (_lodash2.default.isArray(own.arguments)) {
+                myArgument = own.arguments;
             } else {
                 myArgument = this._arguments;
             }
 
-            if (_lodash2.default.isArray(optionAdditionalArguments)) {
-                myArgument = _lodash2.default.union(myArgument, optionAdditionalArguments);
+            if (_lodash2.default.isArray(options.additionalArguments)) {
+                myArgument = _lodash2.default.union(myArgument, options.additionalArguments);
             }
 
             return myArgument;

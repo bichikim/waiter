@@ -64,17 +64,14 @@ export default class Waiter {
      */
     execute(options = {}) {
         //Make Object to contain returning results with callback names
-        const returnObject = {},
-            executeOne = (value, options) => {
-                const bindAndArguments = this._getBindAndArguments(value, options);
-                return value.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
-            };
+        const returnObject = {};
 
         //Execute all this._callbacks
-        _.forEach(this._callbacks, function (callback) {
+        _.forEach(this._callbacks, function (callbackObject) {
             //If It should execute by option.
-            if (this._isExecute(options, callback.name)) {
-                returnObject[callback.name] = executeOne(callback, options[callback.name]);
+            if (this._isExecute(options, callbackObject.name)) {
+                const bindAndArguments = this._getBindAndArguments(callbackObject, options);
+                returnObject[callbackObject.name] = callbackObject.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
             }
             //Continue
             return true;
@@ -101,38 +98,44 @@ export default class Waiter {
         //For returning result names
         const keys = [],
             callbacks = this._AsyncCallback();
+
         //Make async function to execute all this._callbacks
         const async = async () => {
             //Promises to add in Promise.all to execute all asynchronously
             const promises = [];
-            _.forEach(this._callbacks, (callback) => {
+
+            _.forEach(this._callbacks, (callbackObject) => {
+                const name = callbackObject.name,
+                    option = options[name];
                 //If It should execute by option.
-                if (this._isExecute(options, callback.name)) {
+                if (this._isExecute(options, name)) {
+
                     //Save keys for returning results
-                    keys.push(callback.name);
+                    keys.push(name);
+
                     //Checks if a callback needs to make new promise or not
                     let refresh = false;
-
-                    if (_.isNil(callback.promise)) {
+                    if (_.isNil(callbackObject.promise)) {
                         refresh = true;
-                    } else if (_.isObject(options[callback.name])) {
-                        if (_.isObject(options[callback.name].bind) || _.isObject(options[callback.name].arguments)) {
+                    } else if (_.isObject(option)) {
+                        if (_.isObject(option.bind) || _.isObject(option.arguments)) {
                             refresh = true;
                         }
                     }
-
                     if (refresh) {
-                        const bindAndArguments = this._getBindAndArguments(callback, options[callback.name]);
                         //Make and push Promise
-                        const promise = this._makePromise(callback, bindAndArguments.bind, bindAndArguments, arguments);
-                        callback.promise = promise;
-                        promises.push(promise);
+                        callbackObject.promise = this._makePromise(
+                            callbackObject,
+                            this._assembleBind(callbackObject, option),
+                            this._pickArguments(callbackObject, option)
+                        );
+                        promises.push(callbackObject.promise);
                     } else {
-                        promises.push(callback.promise);
+                        promises.push(callbackObject.promise);
                     }
                 }
             });
-            //Execute all
+
             if (_.isFunction(errorCallback)) {
                 //There something wrong with async. It must be caught here not on afterAsync
                 return await Promise.all(promises).catch(reason => errorCallback(reason)).catch(reason => callbacks._reject(reason));
@@ -145,16 +148,22 @@ export default class Waiter {
 
         //Set result callback if it has
         if (_.isFunction(resultCallback)) {
+
             afterAsync.then((results) => {
                 const returns = {};
+
                 _.forEach(results, (result, index) => {
                     returns[keys[index]] = result;
                 });
+
                 resultCallback(returns);
+
                 //Remove doing ones ro etc
                 this._remove();
+
             }).then(results => callbacks._result(results));
         }
+
         return callbacks;
     }
 
@@ -308,19 +317,13 @@ export default class Waiter {
      * @return {{arguments: Array, bind: Object}}
      * @private
      */
-    _getBindAndArguments(value, options) {
+    _getBindAndArguments(value, options = {}) {
         let myArguments = null,
             myBind = null;
-        if (_.isObject(options)) {
-            myArguments = this._pickArguments(
-                _.isArray(value.arguments) ? value.arguments : null,
-                _.isArray(options.arguments) ? options.arguments : null,
-                _.isArray(options.additionalArguments) ? options.additionalArguments : null);
-            myBind = this._assembleBind(value.bind, _.isObject(options.bind) ? options.bind : null);
-        } else {
-            myArguments = this._pickArguments(value.arguments);
-            myBind = this._assembleBind(value.bind);
-        }
+
+        myArguments = this._pickArguments(value, options);
+        myBind = this._assembleBind(value, options);
+
         return {
             arguments: myArguments,
             bind: myBind,
@@ -329,12 +332,12 @@ export default class Waiter {
 
     /**
      * Assemble Bind all this._bind, callback bind, option bind
-     * @param ownBind
-     * @param optionBind
+     * @param own
+     * @param options
      * @return {Object}
      * @private
      */
-    _assembleBind(ownBind, optionBind) {
+    _assembleBind(own = {}, options = {}) {
         const myBind = {};
 
         if (_.isObject(this._bind)) {
@@ -343,14 +346,14 @@ export default class Waiter {
             });
         }
 
-        if (_.isObject(ownBind)) {
-            _.forEach(ownBind, function (value, name) {
+        if (_.isObject(own.bind)) {
+            _.forEach(own.bind, function (value, name) {
                 myBind[name] = value;
             });
         }
 
-        if (_.isObject(optionBind)) {
-            _.forEach(optionBind, function (value, name) {
+        if (_.isObject(options.bind)) {
+            _.forEach(options.bind, function (value, name) {
                 myBind[name] = value;
             });
         }
@@ -360,25 +363,24 @@ export default class Waiter {
 
     /**
      * Pick one of argument from this_arguments, ownArguments, optionsArguments and and additionalArguments
-     * @param ownArguments
-     * @param optionArguments
-     * @param optionAdditionalArguments
+     * @param own
+     * @param options
      * @return {Array}
      * @private
      */
-    _pickArguments(ownArguments, optionArguments, optionAdditionalArguments) {
+    _pickArguments(own = {}, options = {}) {
         let myArgument;
 
-        if (_.isArray(optionArguments)) {
-            myArgument = optionArguments
-        } else if (_.isArray(ownArguments)) {
-            myArgument = ownArguments;
+        if (_.isArray(options.arguments)) {
+            myArgument = options.arguments
+        } else if (_.isArray(own.arguments)) {
+            myArgument = own.arguments;
         } else {
             myArgument = this._arguments;
         }
 
-        if (_.isArray(optionAdditionalArguments)) {
-            myArgument = _.union(myArgument, optionAdditionalArguments);
+        if (_.isArray(options.additionalArguments)) {
+            myArgument = _.union(myArgument, options.additionalArguments);
         }
 
         return myArgument;
