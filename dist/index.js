@@ -111,10 +111,12 @@ var Waiter = function () {
     }, {
         key: 'executeAsync',
         value: function executeAsync(options, resultCallback, errorCallback) {
-            var _this2 = this;
+            var _this2 = this,
+                _arguments2 = arguments;
 
             //For returning result names
-            var keys = [];
+            var keys = [],
+                callbacks = this._AsyncCallback();
             //Make async function to execute all this._callbacks
             var async = async function async() {
                 //Promises to add in Promise.all to execute all asynchronously
@@ -138,19 +140,7 @@ var Waiter = function () {
                         if (refresh) {
                             var bindAndArguments = _this2._getBindAndArguments(callback, options[callback.name]);
                             //Make and push Promise
-                            var promise = function () {
-                                return new Promise(function (resolve, reject) {
-                                    var result = null;
-                                    try {
-                                        //Execute One
-                                        result = callback.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
-                                    } catch (reason) {
-                                        reason.name = callback.name;
-                                        reject(reason);
-                                    }
-                                    resolve(result);
-                                });
-                            }();
+                            var promise = _this2._makePromise(callback, bindAndArguments.bind, bindAndArguments, _arguments2);
                             callback.promise = promise;
                             promises.push(promise);
                         } else {
@@ -163,6 +153,8 @@ var Waiter = function () {
                     //There something wrong with async. It must be caught here not on afterAsync
                     return await Promise.all(promises).catch(function (reason) {
                         return errorCallback(reason);
+                    }).catch(function (reason) {
+                        return callbacks._reject(reason);
                     });
                 }
                 return await Promise.all(promises);
@@ -181,8 +173,54 @@ var Waiter = function () {
                     resultCallback(returns);
                     //Remove doing ones ro etc
                     _this2._remove();
+                }).then(function (results) {
+                    return callbacks._result(results);
                 });
             }
+            return callbacks;
+        }
+    }, {
+        key: '_makePromise',
+        value: function _makePromise(callback, myBind, myArguments) {
+            return function () {
+                return new Promise(function (resolve, reject) {
+                    var result = null;
+                    try {
+                        //Execute One
+                        result = callback.callback.apply(myBind, myArguments);
+                    } catch (reason) {
+                        reason.name = callback.name;
+                        reject(reason);
+                    }
+                    resolve(result);
+                });
+            }();
+        }
+    }, {
+        key: '_AsyncCallback',
+        value: function _AsyncCallback() {
+            return {
+                thenList: [],
+                catchList: [],
+                then: function then(callback) {
+                    this.thenList.push(callback);
+                    return this;
+                },
+                catch: function _catch(callback) {
+                    this.catchList.push(callback);
+                    return this;
+                },
+                _result: function _result(results) {
+                    this.thenList.forEach(function (value) {
+                        value(results);
+                    });
+                },
+                _reject: function _reject(reason) {
+                    this.catchList.forEach(function (value) {
+                        value(reason);
+                    });
+                }
+            };
         }
 
         /**

@@ -98,7 +98,7 @@ const option = {
 
 console.log(waiter.execute(option));
 
-console.log('It will be shown after execute result!');
+console.log('It will be shown after a result of execute!');
 ```
 ## use asynchronously
 ```javascript
@@ -203,11 +203,15 @@ const option = {
  console.log(`Error from ${reason.name}`);
  });
 
-/*
-waiter.executeAsync(option, (result) => {
-    console.log(result);
-});
-*/
-
-console.log('It will be shown before executeAsync result!');
+//now you can use like this. ^1.0.17
+ waiter.executeAsync(option)
+     .then((result) => {
+         window.console.log(result)
+     })
+     .catch((reason) => {
+         window.console.log(reason);
+         window.console.log(reason.name);
+     });
+ 
+console.log('It will be shown before a result of executeAsync!');
 ```

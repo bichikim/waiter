@@ -99,7 +99,8 @@ export default class Waiter {
      */
     executeAsync(options, resultCallback, errorCallback) {
         //For returning result names
-        const keys = [];
+        const keys = [],
+            callbacks = this._AsyncCallback();
         //Make async function to execute all this._callbacks
         const async = async () => {
             //Promises to add in Promise.all to execute all asynchronously
@@ -123,19 +124,7 @@ export default class Waiter {
                     if (refresh) {
                         const bindAndArguments = this._getBindAndArguments(callback, options[callback.name]);
                         //Make and push Promise
-                        const promise = (function () {
-                            return new Promise((resolve, reject) => {
-                                let result = null;
-                                try {
-                                    //Execute One
-                                    result = callback.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
-                                } catch (reason) {
-                                    reason.name = callback.name;
-                                    reject(reason);
-                                }
-                                resolve(result);
-                            });
-                        })();
+                        const promise = this._makePromise(callback, bindAndArguments.bind, bindAndArguments, arguments);
                         callback.promise = promise;
                         promises.push(promise);
                     } else {
@@ -146,7 +135,7 @@ export default class Waiter {
             //Execute all
             if (_.isFunction(errorCallback)) {
                 //There something wrong with async. It must be caught here not on afterAsync
-                return await Promise.all(promises).catch(reason => errorCallback(reason));
+                return await Promise.all(promises).catch(reason => errorCallback(reason)).catch(reason => callbacks._reject(reason));
             }
             return await Promise.all(promises);
         };
@@ -164,10 +153,52 @@ export default class Waiter {
                 resultCallback(returns);
                 //Remove doing ones ro etc
                 this._remove();
-            });
+            }).then(results => callbacks._result(results));
         }
+        return callbacks;
     }
 
+
+    _makePromise(callback, myBind, myArguments) {
+        return (function () {
+            return new Promise((resolve, reject) => {
+                let result = null;
+                try {
+                    //Execute One
+                    result = callback.callback.apply(myBind, myArguments);
+                } catch (reason) {
+                    reason.name = callback.name;
+                    reject(reason);
+                }
+                resolve(result);
+            });
+        })();
+    }
+
+    _AsyncCallback() {
+        return {
+            thenList: [],
+            catchList: [],
+            then(callback){
+                this.thenList.push(callback);
+                return this;
+            },
+            catch(callback){
+                this.catchList.push(callback);
+                return this;
+            },
+            _result(results){
+                this.thenList.forEach((value) => {
+                    value(results);
+                });
+            },
+            _reject(reason){
+                this.catchList.forEach((value) => {
+                    value(reason);
+                });
+            }
+        }
+    }
 
     /**
      * Save many callbacks to operate at ones

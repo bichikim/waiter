@@ -94,13 +94,24 @@ const option = {
     },
 };
 
+waiter.executeAsync(option)
+    .then((result) => {
+        window.console.log(result)
+    })
+    .catch((reason) => {
+        window.console.log(reason);
+        window.console.log(reason.name);
+    });
 
-waiter.executeAsync(option, (result) => {
-    window.console.log(result);
-}, (reason) => {
-    window.console.log(reason);
-    window.console.log(reason.name);
-});
+/*
+
+ waiter.executeAsync(option, (result) => {
+ window.console.log(result);
+ }, (reason) => {
+ window.console.log(reason);
+ window.console.log(reason.name);
+ });
+ */
 
 /*
  waiter.executeAsync(option, (result) => {
