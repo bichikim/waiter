@@ -68,10 +68,11 @@ export default class Waiter {
 
         //Execute all this._callbacks
         _.forEach(this._callbacks, function (callbackObject) {
+            const name = callbackObject.name,
+                option = options[name];
             //If It should execute by option.
-            if (this._isExecute(options, callbackObject.name)) {
-                const bindAndArguments = this._getBindAndArguments(callbackObject, options);
-                returnObject[callbackObject.name] = callbackObject.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
+            if (this._isExecute(options, name)) {
+                returnObject[name] = callbackObject.callback.apply(this._assembleBind(callbackObject, option), this._pickArguments(callbackObject, option));
             }
             //Continue
             return true;
@@ -122,15 +123,15 @@ export default class Waiter {
                             refresh = true;
                         }
                     }
-                    if (refresh) {
+                    if (!refresh) {
+                        promises.push(callbackObject.promise);
+                    } else {
                         //Make and push Promise
                         callbackObject.promise = this._makePromise(
                             callbackObject,
                             this._assembleBind(callbackObject, option),
                             this._pickArguments(callbackObject, option)
                         );
-                        promises.push(callbackObject.promise);
-                    } else {
                         promises.push(callbackObject.promise);
                     }
                 }
@@ -325,7 +326,7 @@ export default class Waiter {
         myBind = this._assembleBind(value, options);
 
         return {
-            arguments: myArguments,
+            arguments: this._pickArguments(value, options),
             bind: myBind,
         }
     }
@@ -365,7 +366,7 @@ export default class Waiter {
      * Pick one of argument from this_arguments, ownArguments, optionsArguments and and additionalArguments
      * @param own
      * @param options
-     * @return {Array}
+     * @return {*}
      * @private
      */
     _pickArguments(own = {}, options = {}) {

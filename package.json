@@ -1,6 +1,6 @@
 {
   "name": "bichi-waiter",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "When you need a solution to execute many functions at ones, it helps you.",
   "main": "./dist/index.js",
   "keywords": ["function", "callback", "utility", "bind", "async"],

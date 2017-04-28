@@ -159,10 +159,11 @@ var Waiter = function () {
 
             //Execute all this._callbacks
             _lodash2.default.forEach(this._callbacks, function (callbackObject) {
+                var name = callbackObject.name,
+                    option = options[name];
                 //If It should execute by option.
-                if (this._isExecute(options, callbackObject.name)) {
-                    var bindAndArguments = this._getBindAndArguments(callbackObject, options);
-                    returnObject[callbackObject.name] = callbackObject.callback.apply(bindAndArguments.bind, bindAndArguments.arguments);
+                if (this._isExecute(options, name)) {
+                    returnObject[name] = callbackObject.callback.apply(this._assembleBind(callbackObject, option), this._pickArguments(callbackObject, option));
                 }
                 //Continue
                 return true;
@@ -217,11 +218,11 @@ var Waiter = function () {
                                 refresh = true;
                             }
                         }
-                        if (refresh) {
-                            //Make and push Promise
-                            callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
+                        if (!refresh) {
                             promises.push(callbackObject.promise);
                         } else {
+                            //Make and push Promise
+                            callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
                             promises.push(callbackObject.promise);
                         }
                     }
@@ -439,7 +440,7 @@ var Waiter = function () {
             myBind = this._assembleBind(value, options);
 
             return {
-                arguments: myArguments,
+                arguments: this._pickArguments(value, options),
                 bind: myBind
             };
         }
@@ -485,7 +486,7 @@ var Waiter = function () {
          * Pick one of argument from this_arguments, ownArguments, optionsArguments and and additionalArguments
          * @param own
          * @param options
-         * @return {Array}
+         * @return {*}
          * @private
          */
 
@@ -10195,6 +10196,8 @@ var option = {
         additionalArguments: ['Execute additional argument']
     }
 };
+
+window.console.log(waiter.execute(option));
 
 waiter.executeAsync(option).then(function (result) {
     window.console.log(result);

@@ -94,6 +94,8 @@ const option = {
     },
 };
 
+window.console.log(waiter.execute(option));
+
 waiter.executeAsync(option)
     .then((result) => {
         window.console.log(result)
