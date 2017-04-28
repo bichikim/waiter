@@ -194,8 +194,6 @@ const option = {
     }
 };
 
-
-
  waiter.executeAsync(option, (result) => {
  console.log(result);
  },(reason)=>{
