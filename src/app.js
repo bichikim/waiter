@@ -312,26 +312,6 @@ export default class Waiter {
     }
 
     /**
-     * Get bind and arguments
-     * @param value
-     * @param options
-     * @return {{arguments: Array, bind: Object}}
-     * @private
-     */
-    _getBindAndArguments(value, options = {}) {
-        let myArguments = null,
-            myBind = null;
-
-        myArguments = this._pickArguments(value, options);
-        myBind = this._assembleBind(value, options);
-
-        return {
-            arguments: this._pickArguments(value, options),
-            bind: myBind,
-        }
-    }
-
-    /**
      * Assemble Bind all this._bind, callback bind, option bind
      * @param own
      * @param options
