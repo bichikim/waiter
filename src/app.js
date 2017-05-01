@@ -2,6 +2,7 @@
  * @file Waiter.js
  * @module waiter
  */
+//다음 할일 콜백 설정 할때 별다른 옵션없을 경우 바로 fuctionname(){} 이 렇게 쓸수 있게
 //noinspection JSUnresolvedVariable
 import _ from 'lodash';
 
@@ -57,10 +58,8 @@ export default class Waiter {
 
     /**
      * Execute functions in this._callbacks options
-     * @returns {Object}
-     *              Array structure => [ 'callbacks name 1' : 'result', 'callbacks name 2' : 'result', 'callbacks name 3' : 'result', ... ]
-     * @param {{ operate : Object, arguments : Array, additionalArguments : Array, bind : Object }} [options]
-     *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
+     * @param {{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}} options Set how to deal each callback objects
+     * @returns {{callback_name1: *, callback_name2: *, ...}} return results
      */
     execute(options = {}) {
         //Make Object to contain returning results with callback names
@@ -79,96 +78,110 @@ export default class Waiter {
         }.bind(this));
 
         //Remove execute only things..
-        this._remove();
+        this._removeOnes();
 
         //return results
         return returnObject;
     }
 
-
     /**
      * Execute all asynchronously. Result will return with resultCallback when the latest callback is done
-     * @param {Object} options Same as the this.execute option parameter
-     * @param {Function} [resultCallback]
-     *                  Function structure => function(results) {}
-     *                  Results parameter structure => Same as execute's returning object
-     * @param {Function} [errorCallback]
-     *                  Function structure => function(reason) {}
+     * @param {[{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}, ...]} options Set how to deal each callback objects
+     *              Or can be an object
+     * @return {{then : Function, catch : Function, _result : Function, _reject : Function}} callback chain
      */
-    executeAsync(options, resultCallback, errorCallback) {
-        //For returning result names
-        const keys = [],
-            callbacks = this._AsyncCallback();
+    executeAsync(options) {
+        const callbacks = this._AsyncCallback();
+        let groups;
+
+        if (_.isArray(options)) {
+            groups = options;
+        } else if (_.isObject(options)) {
+            groups = [options];
+        } else {
+            throw new Error('options must be Array or object');
+        }
 
         //Make async function to execute all this._callbacks
         const async = async () => {
             //Promises to add in Promise.all to execute all asynchronously
-            const promises = [];
+            const length = groups.length;
 
-            _.forEach(this._callbacks, (callbackObject) => {
-                const name = callbackObject.name,
-                    option = options[name];
-                //If It should execute by option.
-                if (this._isExecute(options, name)) {
+            for (let i = 0; i < length; i += 1) {
+                const promises = [],
+                    //For returning result names
+                    keys = [],
+                    myOption = groups[i];
+                let result;
+                _.forEach(this._callbacks, (callbackObject) => {
+                    const name = callbackObject.name,
+                        option = myOption[name];
+                    //If It should execute by option.
+                    if (this._isExecute(myOption, name)) {
 
-                    //Save keys for returning results
-                    keys.push(name);
+                        //Save keys for returning results
+                        keys.push(name);
 
-                    //Checks if a callback needs to make new promise or not
-                    let refresh = false;
-                    if (_.isNil(callbackObject.promise)) {
-                        refresh = true;
-                    } else if (_.isObject(option)) {
-                        if (_.isObject(option.bind) || _.isObject(option.arguments)) {
+                        //Checks if a callback needs to make new promise or not
+                        let refresh = false;
+                        if (_.isNil(callbackObject.promise)) {
                             refresh = true;
+                        } else if (_.isObject(option)) {
+                            if (_.isObject(option.bind) || _.isObject(option.arguments)) {
+                                refresh = true;
+                            }
+                        }
+                        if (!refresh) {
+                            promises.push(callbackObject.promise);
+                        } else {
+                            //Make and push Promise
+                            callbackObject.promise = this._makePromise(
+                                callbackObject,
+                                this._assembleBind(callbackObject, option),
+                                this._pickArguments(callbackObject, option)
+                            );
+                            promises.push(callbackObject.promise);
                         }
                     }
-                    if (!refresh) {
-                        promises.push(callbackObject.promise);
-                    } else {
-                        //Make and push Promise
-                        callbackObject.promise = this._makePromise(
-                            callbackObject,
-                            this._assembleBind(callbackObject, option),
-                            this._pickArguments(callbackObject, option)
-                        );
-                        promises.push(callbackObject.promise);
-                    }
+                });
+                result = await Promise.all(promises)
+                    .catch(reason => callbacks._reject(reason))
+                    .then(results => callbacks._result(this._makeResultObject(keys, results)));
+                if (i === length - 1) {
+                    return result
                 }
-            });
-
-            if (_.isFunction(errorCallback)) {
-                //There something wrong with async. It must be caught here not on afterAsync
-                return await Promise.all(promises).catch(reason => errorCallback(reason)).catch(reason => callbacks._reject(reason));
             }
-            return await Promise.all(promises);
         };
 
-        //Execute all asynchronously
-        let afterAsync = async();
-
-        //Set result callback if it has
-        if (_.isFunction(resultCallback)) {
-
-            afterAsync.then((results) => {
-                const returns = {};
-
-                _.forEach(results, (result, index) => {
-                    returns[keys[index]] = result;
-                });
-
-                resultCallback(returns);
-
-                //Remove doing ones ro etc
-                this._remove();
-
-            }).then(results => callbacks._result(results));
-        }
-
+        //Execute all asynchronously//callbacks._result(results)
+        async();
+        //Remove doing ones ro etc
+        this._removeOnes();
         return callbacks;
     }
 
+    /**
+     *
+     * @param {Array} names
+     * @param {Array} results
+     * @return {Object}
+     * @private
+     */
+    _makeResultObject(names, results) {
+        const resultObject = {};
+        _.forEach(results, (result, index) => {
+            resultObject[names[index]] = result;
+        });
+        return resultObject;
+    }
 
+    /**
+     *
+     * @param callback
+     * @param myBind
+     * @param myArguments
+     * @private
+     */
     _makePromise(callback, myBind, myArguments) {
         return (function () {
             return new Promise((resolve, reject) => {
@@ -185,6 +198,11 @@ export default class Waiter {
         })();
     }
 
+    /**
+     *
+     * @return {*}
+     * @private
+     */
     _AsyncCallback() {
         return {
             thenList: [],
@@ -198,14 +216,14 @@ export default class Waiter {
                 return this;
             },
             _result(results){
-                this.thenList.forEach((value) => {
-                    value(results);
-                });
+                if (this.thenList.length > 0) {
+                    this.thenList.shift()(results);
+                }
             },
             _reject(reason){
-                this.catchList.forEach((value) => {
-                    value(reason);
-                });
+                if (this.catchList.length > 0) {
+                    this.catchList.shift()(reason);
+                }
             }
         }
     }
@@ -384,8 +402,8 @@ export default class Waiter {
                 }
                 return false;
             }
+            return this._defaultOperate;
         }
-
         return true;
     }
 
@@ -394,7 +412,7 @@ export default class Waiter {
      * Remove callbacks which operate one time;
      * @private
      */
-    _remove() {
+    _removeOnes() {
         _.remove(this._callbacks, 'ones');
     }
 

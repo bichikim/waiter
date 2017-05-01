@@ -4,10 +4,13 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * @file Waiter.js
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * @module waiter
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       */
+//다음 할일 콜백 설정 할때 별다른 옵션없을 경우 바로 fuctionname(){} 이 렇게 쓸수 있게
 //noinspection JSUnresolvedVariable
 
 
@@ -64,10 +67,8 @@ var Waiter = function () {
 
         /**
          * Execute functions in this._callbacks options
-         * @returns {Object}
-         *              Array structure => [ 'callbacks name 1' : 'result', 'callbacks name 2' : 'result', 'callbacks name 3' : 'result', ... ]
-         * @param {{ operate : Object, arguments : Array, additionalArguments : Array, bind : Object }} [options]
-         *              Object structure => { operate : 'operate or not', arguments : 'replace arguments', additionalArguments : 'add arguments', bind : 'overwrite bind' }
+         * @param {{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}} options Set how to deal each callback objects
+         * @returns {{callback_name1: *, callback_name2: *, ...}} return results
          */
         value: function execute() {
             var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -88,7 +89,7 @@ var Waiter = function () {
             }.bind(this));
 
             //Remove execute only things..
-            this._remove();
+            this._removeOnes();
 
             //return results
             return returnObject;
@@ -96,91 +97,118 @@ var Waiter = function () {
 
         /**
          * Execute all asynchronously. Result will return with resultCallback when the latest callback is done
-         * @param {Object} options Same as the this.execute option parameter
-         * @param {Function} [resultCallback]
-         *                  Function structure => function(results) {}
-         *                  Results parameter structure => Same as execute's returning object
-         * @param {Function} [errorCallback]
-         *                  Function structure => function(reason) {}
+         * @param {[{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}, ...]} options Set how to deal each callback objects
+         *              Or can be an object
+         * @return {{then : Function, catch : Function, _result : Function, _reject : Function}} callback chain
          */
 
     }, {
         key: 'executeAsync',
-        value: function executeAsync(options, resultCallback, errorCallback) {
+        value: function executeAsync(options) {
             var _this = this;
 
-            //For returning result names
-            var keys = [],
-                callbacks = this._AsyncCallback();
+            var callbacks = this._AsyncCallback();
+            var groups = void 0;
+
+            if (_lodash2.default.isArray(options)) {
+                groups = options;
+            } else if (_lodash2.default.isObject(options)) {
+                groups = [options];
+            } else {
+                throw new Error('options must be Array or object');
+            }
 
             //Make async function to execute all this._callbacks
             var async = async function async() {
                 //Promises to add in Promise.all to execute all asynchronously
-                var promises = [];
+                var length = groups.length;
 
-                _lodash2.default.forEach(_this._callbacks, function (callbackObject) {
-                    var name = callbackObject.name,
-                        option = options[name];
-                    //If It should execute by option.
-                    if (_this._isExecute(options, name)) {
+                var _loop = async function _loop(i) {
+                    var promises = [],
 
-                        //Save keys for returning results
-                        keys.push(name);
+                    //For returning result names
+                    keys = [],
+                        myOption = groups[i];
+                    var result = void 0;
+                    _lodash2.default.forEach(_this._callbacks, function (callbackObject) {
+                        var name = callbackObject.name,
+                            option = myOption[name];
+                        //If It should execute by option.
+                        if (_this._isExecute(myOption, name)) {
 
-                        //Checks if a callback needs to make new promise or not
-                        var refresh = false;
-                        if (_lodash2.default.isNil(callbackObject.promise)) {
-                            refresh = true;
-                        } else if (_lodash2.default.isObject(option)) {
-                            if (_lodash2.default.isObject(option.bind) || _lodash2.default.isObject(option.arguments)) {
+                            //Save keys for returning results
+                            keys.push(name);
+
+                            //Checks if a callback needs to make new promise or not
+                            var refresh = false;
+                            if (_lodash2.default.isNil(callbackObject.promise)) {
                                 refresh = true;
+                            } else if (_lodash2.default.isObject(option)) {
+                                if (_lodash2.default.isObject(option.bind) || _lodash2.default.isObject(option.arguments)) {
+                                    refresh = true;
+                                }
+                            }
+                            if (!refresh) {
+                                promises.push(callbackObject.promise);
+                            } else {
+                                //Make and push Promise
+                                callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
+                                promises.push(callbackObject.promise);
                             }
                         }
-                        if (!refresh) {
-                            promises.push(callbackObject.promise);
-                        } else {
-                            //Make and push Promise
-                            callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
-                            promises.push(callbackObject.promise);
-                        }
-                    }
-                });
-
-                if (_lodash2.default.isFunction(errorCallback)) {
-                    //There something wrong with async. It must be caught here not on afterAsync
-                    return await Promise.all(promises).catch(function (reason) {
-                        return errorCallback(reason);
-                    }).catch(function (reason) {
-                        return callbacks._reject(reason);
                     });
+                    result = await Promise.all(promises).catch(function (reason) {
+                        return callbacks._reject(reason);
+                    }).then(function (results) {
+                        return callbacks._result(_this._makeResultObject(keys, results));
+                    });
+                    if (i === length - 1) {
+                        return {
+                            v: result
+                        };
+                    }
+                };
+
+                for (var i = 0; i < length; i += 1) {
+                    var _ret = await _loop(i);
+
+                    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
                 }
-                return await Promise.all(promises);
             };
 
-            //Execute all asynchronously
-            var afterAsync = async();
-
-            //Set result callback if it has
-            if (_lodash2.default.isFunction(resultCallback)) {
-
-                afterAsync.then(function (results) {
-                    var returns = {};
-
-                    _lodash2.default.forEach(results, function (result, index) {
-                        returns[keys[index]] = result;
-                    });
-
-                    resultCallback(returns);
-
-                    //Remove doing ones ro etc
-                    _this._remove();
-                }).then(function (results) {
-                    return callbacks._result(results);
-                });
-            }
-
+            //Execute all asynchronously//callbacks._result(results)
+            async();
+            //Remove doing ones ro etc
+            this._removeOnes();
             return callbacks;
         }
+
+        /**
+         *
+         * @param {Array} names
+         * @param {Array} results
+         * @return {Object}
+         * @private
+         */
+
+    }, {
+        key: '_makeResultObject',
+        value: function _makeResultObject(names, results) {
+            var resultObject = {};
+            _lodash2.default.forEach(results, function (result, index) {
+                resultObject[names[index]] = result;
+            });
+            return resultObject;
+        }
+
+        /**
+         *
+         * @param callback
+         * @param myBind
+         * @param myArguments
+         * @private
+         */
+
     }, {
         key: '_makePromise',
         value: function _makePromise(callback, myBind, myArguments) {
@@ -198,6 +226,13 @@ var Waiter = function () {
                 });
             }();
         }
+
+        /**
+         *
+         * @return {*}
+         * @private
+         */
+
     }, {
         key: '_AsyncCallback',
         value: function _AsyncCallback() {
@@ -213,14 +248,14 @@ var Waiter = function () {
                     return this;
                 },
                 _result: function _result(results) {
-                    this.thenList.forEach(function (value) {
-                        value(results);
-                    });
+                    if (this.thenList.length > 0) {
+                        this.thenList.shift()(results);
+                    }
                 },
                 _reject: function _reject(reason) {
-                    this.catchList.forEach(function (value) {
-                        value(reason);
-                    });
+                    if (this.catchList.length > 0) {
+                        this.catchList.shift()(reason);
+                    }
                 }
             };
         }
@@ -339,31 +374,6 @@ var Waiter = function () {
         }
 
         /**
-         * Get bind and arguments
-         * @param value
-         * @param options
-         * @return {{arguments: Array, bind: Object}}
-         * @private
-         */
-
-    }, {
-        key: '_getBindAndArguments',
-        value: function _getBindAndArguments(value) {
-            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-            var myArguments = null,
-                myBind = null;
-
-            myArguments = this._pickArguments(value, options);
-            myBind = this._assembleBind(value, options);
-
-            return {
-                arguments: this._pickArguments(value, options),
-                bind: myBind
-            };
-        }
-
-        /**
          * Assemble Bind all this._bind, callback bind, option bind
          * @param own
          * @param options
@@ -451,8 +461,8 @@ var Waiter = function () {
                     }
                     return false;
                 }
+                return this._defaultOperate;
             }
-
             return true;
         }
 
@@ -462,8 +472,8 @@ var Waiter = function () {
          */
 
     }, {
-        key: '_remove',
-        value: function _remove() {
+        key: '_removeOnes',
+        value: function _removeOnes() {
             _lodash2.default.remove(this._callbacks, 'ones');
         }
     }, {

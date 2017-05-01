@@ -93,8 +93,28 @@ const option = {
         additionalArguments: ['Execute additional argument'],
     },
 };
+//eslint-disable-next-line one-var
+const options = [
+    option,
+    {
+        sayHelloWithOperateFalseOption: {
+            operate: true,
+        },
+        sayHelloExecuteBind: {
+            bind: {
+                name: 'Execute bind',
+            },
+        },
+        sayHelloExecuteArguments: {
+            arguments: ['Execute argument']
+        },
+        sayHelloExecuteAdditionalArguments: {
+            additionalArguments: ['Execute additional argument'],
+        },
+    }
+];
 
-window.console.log(waiter.execute(option));
+//window.console.log(waiter.execute(option));
 
 waiter.executeAsync(option)
     .then((result) => {
@@ -103,17 +123,30 @@ waiter.executeAsync(option)
     .catch((reason) => {
         window.console.log(reason);
         window.console.log(reason.name);
+    })
+    .then((result) => {
+        window.console.log(result)
     });
 
-/*
+waiter.executeAsync(options)
+    .then((result) => {
+        window.console.log(result)
+    })
+    .catch((reason) => {
+        window.console.log(reason);
+        window.console.log(reason.name);
+    })
+    .then((result) => {
+        window.console.log(result)
+    });
 
- waiter.executeAsync(option, (result) => {
+
+/*waiter.executeAsync(option, (result) => {
  window.console.log(result);
  }, (reason) => {
  window.console.log(reason);
  window.console.log(reason.name);
- });
- */
+ });*/
 
 /*
  waiter.executeAsync(option, (result) => {
@@ -124,15 +157,10 @@ waiter.executeAsync(option)
 window.console.log('It will be shown before executeAsync result!');
 
 setTimeout(() => {
-    waiter.executeAsync(option, (result) => {
-        window.console.log(result);
-    }, (reason) => {
-        window.console.log(reason);
-        window.console.log(reason.name);
-    });
-    window.console.log(waiter.remove('sayHello'));
-    window.console.log(waiter.show);
+    waiter.remove('sayHello');
+    //window.console.log();
+    //window.console.log(waiter.show);
     waiter.clear();
-    window.console.log(waiter.show);
+    //window.console.log(waiter.show);
 //eslint-disable-next-line no-magic-numbers
 }, 1000);
