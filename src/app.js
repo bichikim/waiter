@@ -57,7 +57,7 @@ export default class Waiter {
     }
 
     /**
-     * Execute functions in this._callbacks options
+     * Execute functions with this._callbacks options
      * @param {{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}} options Set how to deal each callback objects
      * @returns {{callback_name1: *, callback_name2: *, ...}} return results
      */
@@ -85,7 +85,7 @@ export default class Waiter {
     }
 
     /**
-     * Execute all asynchronously. Result will return with resultCallback when the latest callback is done
+     * Execute all asynchronously. Results will be returned with callbacks.then
      * @param {[{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}, ...]} options Set how to deal each callback objects
      *              Or can be an object
      * @return {{then : Function, catch : Function, _result : Function, _reject : Function}} callback chain
