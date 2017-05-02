@@ -2,12 +2,12 @@
 ## When you need a solution to execute many functions at ones, it helps you!
 
 ## Installation
-Please use ^1.0.14
+>Please use ^1.1.0
 ````bash
 npm install --save bichi-waiter
 ````
 
-## Use 
+## Quick Start 
 ```javascript
 import Waiter from 'bichi-waiter';
 const waiter = new Waiter();
@@ -128,7 +128,7 @@ const options = [
 console.log(waiter.execute(option));
 
 //asynchronously
-//now you can use like this. ^1.0.17
+//now you can use executeAsync like this. ^1.0.17
  waiter.executeAsync(option)
      .then((result) => {
          window.console.log(result)
@@ -138,7 +138,7 @@ console.log(waiter.execute(option));
          window.console.log(reason.name);
      });
  
-//now you can use like this. ^1.0.21
+//now you can use executeAsync like this. ^1.0.21
 waiter.executeAsync(options)
     .then((result) => {
         window.console.log(result)

@@ -266,83 +266,6 @@ var Waiter = function () {
         }
 
         /**
-         *
-         * @param {Array} names
-         * @param {Array} results
-         * @return {Object}
-         * @private
-         */
-
-    }, {
-        key: '_makeResultObject',
-        value: function _makeResultObject(names, results) {
-            var resultObject = {};
-            _lodash2.default.forEach(results, function (result, index) {
-                resultObject[names[index]] = result;
-            });
-            return resultObject;
-        }
-
-        /**
-         *
-         * @param callback
-         * @param myBind
-         * @param myArguments
-         * @private
-         */
-
-    }, {
-        key: '_makePromise',
-        value: function _makePromise(callback, myBind, myArguments) {
-            return function () {
-                return new Promise(function (resolve, reject) {
-                    var result = null;
-                    try {
-                        //Execute One
-                        result = callback.callback.apply(myBind, myArguments);
-                    } catch (reason) {
-                        reason.name = callback.name;
-                        reject(reason);
-                    }
-                    resolve(result);
-                });
-            }();
-        }
-
-        /**
-         *
-         * @return {*}
-         * @private
-         */
-
-    }, {
-        key: '_AsyncCallback',
-        value: function _AsyncCallback() {
-            return {
-                thenList: [],
-                catchList: [],
-                then: function then(callback) {
-                    this.thenList.push(callback);
-                    return this;
-                },
-                catch: function _catch(callback) {
-                    this.catchList.push(callback);
-                    return this;
-                },
-                _result: function _result(results) {
-                    if (this.thenList.length > 0) {
-                        this.thenList.shift()(results);
-                    }
-                },
-                _reject: function _reject(reason) {
-                    if (this.catchList.length > 0) {
-                        this.catchList.shift()(reason);
-                    }
-                }
-            };
-        }
-
-        /**
          * Save many callbacks to operate at ones
          * @param {{ones: Boolean, bind: Object, arguments: Array}} objects
          * @returns {boolean}
@@ -557,6 +480,83 @@ var Waiter = function () {
         key: '_removeOnes',
         value: function _removeOnes() {
             _lodash2.default.remove(this._callbacks, 'ones');
+        }
+
+        /**
+         *
+         * @param {Array} names
+         * @param {Array} results
+         * @return {Object}
+         * @private
+         */
+
+    }, {
+        key: '_makeResultObject',
+        value: function _makeResultObject(names, results) {
+            var resultObject = {};
+            _lodash2.default.forEach(results, function (result, index) {
+                resultObject[names[index]] = result;
+            });
+            return resultObject;
+        }
+
+        /**
+         *
+         * @param callback
+         * @param myBind
+         * @param myArguments
+         * @private
+         */
+
+    }, {
+        key: '_makePromise',
+        value: function _makePromise(callback, myBind, myArguments) {
+            return function () {
+                return new Promise(function (resolve, reject) {
+                    var result = null;
+                    try {
+                        //Execute One
+                        result = callback.callback.apply(myBind, myArguments);
+                    } catch (reason) {
+                        reason.name = callback.name;
+                        reject(reason);
+                    }
+                    resolve(result);
+                });
+            }();
+        }
+
+        /**
+         *
+         * @return {*}
+         * @private
+         */
+
+    }, {
+        key: '_AsyncCallback',
+        value: function _AsyncCallback() {
+            return {
+                thenList: [],
+                catchList: [],
+                then: function then(callback) {
+                    this.thenList.push(callback);
+                    return this;
+                },
+                catch: function _catch(callback) {
+                    this.catchList.push(callback);
+                    return this;
+                },
+                _result: function _result(results) {
+                    if (this.thenList.length > 0) {
+                        this.thenList.shift()(results);
+                    }
+                },
+                _reject: function _reject(reason) {
+                    if (this.catchList.length > 0) {
+                        this.catchList.shift()(reason);
+                    }
+                }
+            };
         }
     }, {
         key: 'defaultOperate',

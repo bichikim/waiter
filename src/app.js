@@ -161,74 +161,6 @@ export default class Waiter {
     }
 
     /**
-     *
-     * @param {Array} names
-     * @param {Array} results
-     * @return {Object}
-     * @private
-     */
-    _makeResultObject(names, results) {
-        const resultObject = {};
-        _.forEach(results, (result, index) => {
-            resultObject[names[index]] = result;
-        });
-        return resultObject;
-    }
-
-    /**
-     *
-     * @param callback
-     * @param myBind
-     * @param myArguments
-     * @private
-     */
-    _makePromise(callback, myBind, myArguments) {
-        return (function () {
-            return new Promise((resolve, reject) => {
-                let result = null;
-                try {
-                    //Execute One
-                    result = callback.callback.apply(myBind, myArguments);
-                } catch (reason) {
-                    reason.name = callback.name;
-                    reject(reason);
-                }
-                resolve(result);
-            });
-        })();
-    }
-
-    /**
-     *
-     * @return {*}
-     * @private
-     */
-    _AsyncCallback() {
-        return {
-            thenList: [],
-            catchList: [],
-            then(callback){
-                this.thenList.push(callback);
-                return this;
-            },
-            catch(callback){
-                this.catchList.push(callback);
-                return this;
-            },
-            _result(results){
-                if (this.thenList.length > 0) {
-                    this.thenList.shift()(results);
-                }
-            },
-            _reject(reason){
-                if (this.catchList.length > 0) {
-                    this.catchList.shift()(reason);
-                }
-            }
-        }
-    }
-
-    /**
      * Save many callbacks to operate at ones
      * @param {{ones: Boolean, bind: Object, arguments: Array}} objects
      * @returns {boolean}
@@ -407,13 +339,80 @@ export default class Waiter {
         return true;
     }
 
-
     /**
      * Remove callbacks which operate one time;
      * @private
      */
     _removeOnes() {
         _.remove(this._callbacks, 'ones');
+    }
+
+    /**
+     *
+     * @param {Array} names
+     * @param {Array} results
+     * @return {Object}
+     * @private
+     */
+    _makeResultObject(names, results) {
+        const resultObject = {};
+        _.forEach(results, (result, index) => {
+            resultObject[names[index]] = result;
+        });
+        return resultObject;
+    }
+
+    /**
+     *
+     * @param callback
+     * @param myBind
+     * @param myArguments
+     * @private
+     */
+    _makePromise(callback, myBind, myArguments) {
+        return (function () {
+            return new Promise((resolve, reject) => {
+                let result = null;
+                try {
+                    //Execute One
+                    result = callback.callback.apply(myBind, myArguments);
+                } catch (reason) {
+                    reason.name = callback.name;
+                    reject(reason);
+                }
+                resolve(result);
+            });
+        })();
+    }
+
+    /**
+     *
+     * @return {*}
+     * @private
+     */
+    _AsyncCallback() {
+        return {
+            thenList: [],
+            catchList: [],
+            then(callback){
+                this.thenList.push(callback);
+                return this;
+            },
+            catch(callback){
+                this.catchList.push(callback);
+                return this;
+            },
+            _result(results){
+                if (this.thenList.length > 0) {
+                    this.thenList.shift()(results);
+                }
+            },
+            _reject(reason){
+                if (this.catchList.length > 0) {
+                    this.catchList.shift()(reason);
+                }
+            }
+        }
     }
 
 }
