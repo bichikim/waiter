@@ -10029,7 +10029,6 @@ var WaiterAsync = function (_Waiter) {
                     var keys = [],
                         myOption = groups[i],
                         promises = [];
-                    var result = void 0;
                     _lodash2.default.forEach(_this2._handlers, function (callbackObject) {
                         var name = callbackObject.name,
                             option = myOption[name];
@@ -10186,9 +10185,9 @@ exports.default = WaiterAsync;
 "use strict";
 
 
-var _app = __webpack_require__(3);
+var _src = __webpack_require__(3);
 
-var waiter = new _app.WaiterAsync();
+var waiter = new _src.WaiterAsync();
 
 //eslint-disable-next-line one-var
 /*eslint-disable comma-dangle */
