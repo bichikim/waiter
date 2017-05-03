@@ -63,528 +63,11 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, exports) {
-
-/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
-module.exports = __webpack_amd_options__;
-
-/* WEBPACK VAR INJECTION */}.call(exports, {}))
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @file Waiter.js
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @module waiter
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
-//다음 할일 콜백 설정 할때 별다른 옵션없을 경우 바로 fuctionname(){} 이 렇게 쓸수 있게
-//noinspection JSUnresolvedVariable
-
-
-var _lodash = __webpack_require__(2);
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Waiter = function () {
-    function Waiter() {
-        _classCallCheck(this, Waiter);
-
-        /**
-         * Objects which have one callbacks and etc.
-         * @type {Array}
-         *              Array structure => [ Object, Object, Object, ... ]
-         *              Its object structure => { name : 'Name of callback. result will return by the name', callback : 'Execute function operate this', ones : 'Operating only one or not', bind : 'Bind data when its callback execute', argument: 'Set argument when its callback execute', promise: 'Saving  promise by this.executeAsync if it needs' }
-         * @private
-         */
-        this._callbacks = [];
-        /**
-         *
-         * @type {Array}
-         * @private
-         */
-        this._arguments = [];
-        /**
-         *
-         * @type {null}
-         * @private
-         */
-        this._bind = null;
-        /**
-         *
-         * @type {boolean}
-         * @private
-         */
-        this._defaultOperate = true;
-    }
-
-    /**
-     * When execute function has options, it does not mention to operate it or not it will be operated basically
-     * However if make this false basically it won't be operated by the execute
-     * @param {Object} operate
-     */
-
-
-    _createClass(Waiter, [{
-        key: 'execute',
-
-
-        /**
-         * Execute functions in this._callbacks options
-         * @param {{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}} options Set how to deal each callback objects
-         * @returns {{callback_name1: *, callback_name2: *, ...}} return results
-         */
-        value: function execute() {
-            var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-            //Make Object to contain returning results with callback names
-            var returnObject = {};
-
-            //Execute all this._callbacks
-            _lodash2.default.forEach(this._callbacks, function (callbackObject) {
-                var name = callbackObject.name,
-                    option = options[name];
-                //If It should execute by option.
-                if (this._isExecute(options, name)) {
-                    returnObject[name] = callbackObject.callback.apply(this._assembleBind(callbackObject, option), this._pickArguments(callbackObject, option));
-                }
-                //Continue
-                return true;
-            }.bind(this));
-
-            //Remove execute only things..
-            this._removeOnes();
-
-            //return results
-            return returnObject;
-        }
-
-        /**
-         * Execute all asynchronously. Result will return with resultCallback when the latest callback is done
-         * @param {[{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}, ...]} options Set how to deal each callback objects
-         *              Or can be an object
-         * @return {{then : Function, catch : Function, _result : Function, _reject : Function}} callback chain
-         */
-
-    }, {
-        key: 'executeAsync',
-        value: function executeAsync(options) {
-            var _this = this;
-
-            var callbacks = this._AsyncCallback();
-            var groups = void 0;
-
-            if (_lodash2.default.isArray(options)) {
-                groups = options;
-            } else if (_lodash2.default.isObject(options)) {
-                groups = [options];
-            } else {
-                throw new Error('options must be Array or object');
-            }
-
-            //Make async function to execute all this._callbacks
-            var async = async function async() {
-                //Promises to add in Promise.all to execute all asynchronously
-                var length = groups.length;
-
-                var _loop = async function _loop(i) {
-                    var promises = [],
-
-                    //For returning result names
-                    keys = [],
-                        myOption = groups[i];
-                    var result = void 0;
-                    _lodash2.default.forEach(_this._callbacks, function (callbackObject) {
-                        var name = callbackObject.name,
-                            option = myOption[name];
-                        //If It should execute by option.
-                        if (_this._isExecute(myOption, name)) {
-
-                            //Save keys for returning results
-                            keys.push(name);
-
-                            //Checks if a callback needs to make new promise or not
-                            var refresh = false;
-                            if (_lodash2.default.isNil(callbackObject.promise)) {
-                                refresh = true;
-                            } else if (_lodash2.default.isObject(option)) {
-                                if (_lodash2.default.isObject(option.bind) || _lodash2.default.isObject(option.arguments)) {
-                                    refresh = true;
-                                }
-                            }
-                            if (!refresh) {
-                                promises.push(callbackObject.promise);
-                            } else {
-                                //Make and push Promise
-                                callbackObject.promise = _this._makePromise(callbackObject, _this._assembleBind(callbackObject, option), _this._pickArguments(callbackObject, option));
-                                promises.push(callbackObject.promise);
-                            }
-                        }
-                    });
-                    result = await Promise.all(promises).catch(function (reason) {
-                        return callbacks._reject(reason);
-                    }).then(function (results) {
-                        return callbacks._result(_this._makeResultObject(keys, results));
-                    });
-                    if (i === length - 1) {
-                        return {
-                            v: result
-                        };
-                    }
-                };
-
-                for (var i = 0; i < length; i += 1) {
-                    var _ret = await _loop(i);
-
-                    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-                }
-            };
-
-            //Execute all asynchronously//callbacks._result(results)
-            async();
-            //Remove doing ones ro etc
-            this._removeOnes();
-            return callbacks;
-        }
-
-        /**
-         * Save many callbacks to operate at ones
-         * @param {{ones: Boolean, bind: Object, arguments: Array}} objects
-         * @returns {boolean}
-         */
-
-    }, {
-        key: 'saveMany',
-        value: function saveMany(objects) {
-            if (!_lodash2.default.isObject(objects)) {
-                return false;
-            }
-
-            _lodash2.default.forEach(objects, function (value, key) {
-                if (!_lodash2.default.isObject(value)) {
-                    return true;
-                }
-
-                if (!_lodash2.default.isFunction(value.callback)) {
-                    return true;
-                }
-
-                this.save(value.callback, key, value.ones, value.bind, value.arguments);
-            }.bind(this));
-
-            return true;
-        }
-
-        /**
-         * Save one callback to fire
-         * @param {Function} callback
-         * @param {String} name
-         * @param {Boolean} ones
-         * @param {Object} my_bind_object
-         * @param {Array} my_argument_array
-         * @returns {boolean} Save or not
-         */
-
-    }, {
-        key: 'save',
-        value: function save(callback, name, ones, my_bind_object, my_argument_array) {
-            if (!_lodash2.default.isFunction(callback)) {
-                return false;
-            }
-            this._callbacks.push({
-                name: name,
-                callback: callback,
-                ones: _lodash2.default.isBoolean(ones) ? ones : false,
-                bind: _lodash2.default.isObject(my_bind_object) ? my_bind_object : null,
-                arguments: _lodash2.default.isArray(my_argument_array) ? my_argument_array : null,
-                promise: null
-            });
-            return true;
-        }
-
-        /**
-         * Remove name of callback item
-         * @param name
-         */
-
-    }, {
-        key: 'remove',
-        value: function remove(name) {
-            return _lodash2.default.remove(this._callbacks, function (value) {
-                return value.name === name;
-            });
-        }
-
-        /**
-         * Register bind to bind it with callbacks when this waiter operate all this._callbacks
-         * @param {Object} my_bind_object
-         */
-
-    }, {
-        key: 'bind',
-        value: function bind(my_bind_object) {
-            if (_lodash2.default.isObject(my_bind_object)) {
-                this._bind = my_bind_object;
-                return true;
-            }
-
-            return false;
-        }
-
-        /**
-         * Register argument to use this when this waiter become fired
-         * @param array
-         */
-
-    }, {
-        key: 'arguments',
-        value: function _arguments(array) {
-            if (_lodash2.default.isArray(array)) {
-                this._arguments = array;
-                return true;
-            }
-
-            return false;
-        }
-
-        /**
-         * remove all clear
-         * @return {Boolean}
-         */
-
-    }, {
-        key: 'clear',
-        value: function clear() {
-            return _lodash2.default.remove(this._callbacks, function () {
-                return true;
-            });
-        }
-
-        /**
-         * Assemble Bind all this._bind, callback bind, option bind
-         * @param own
-         * @param options
-         * @return {Object}
-         * @private
-         */
-
-    }, {
-        key: '_assembleBind',
-        value: function _assembleBind() {
-            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-            var myBind = {};
-
-            if (_lodash2.default.isObject(this._bind)) {
-                _lodash2.default.forEach(this._bind, function (value, name) {
-                    myBind[name] = value;
-                });
-            }
-
-            if (_lodash2.default.isObject(own.bind)) {
-                _lodash2.default.forEach(own.bind, function (value, name) {
-                    myBind[name] = value;
-                });
-            }
-
-            if (_lodash2.default.isObject(options.bind)) {
-                _lodash2.default.forEach(options.bind, function (value, name) {
-                    myBind[name] = value;
-                });
-            }
-
-            return myBind;
-        }
-
-        /**
-         * Pick one of argument from this_arguments, ownArguments, optionsArguments and and additionalArguments
-         * @param own
-         * @param options
-         * @return {*}
-         * @private
-         */
-
-    }, {
-        key: '_pickArguments',
-        value: function _pickArguments() {
-            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
-            var myArgument = void 0;
-
-            if (_lodash2.default.isArray(options.arguments)) {
-                myArgument = options.arguments;
-            } else if (_lodash2.default.isArray(own.arguments)) {
-                myArgument = own.arguments;
-            } else {
-                myArgument = this._arguments;
-            }
-
-            if (_lodash2.default.isArray(options.additionalArguments)) {
-                myArgument = _lodash2.default.union(myArgument, options.additionalArguments);
-            }
-
-            return myArgument;
-        }
-
-        /**
-         * Return It should to execute or not
-         * @param options
-         * @param name
-         * @return {boolean}
-         * @private
-         */
-
-    }, {
-        key: '_isExecute',
-        value: function _isExecute(options, name) {
-            if (_lodash2.default.isObject(options)) {
-                if (_lodash2.default.isObject(options[name])) {
-                    if (_lodash2.default.isBoolean(options[name].operate) && options[name].operate) {
-                        return true;
-                    } else if (!_lodash2.default.isBoolean(options[name].operate)) {
-                        return this._defaultOperate;
-                    }
-                    return false;
-                }
-                return this._defaultOperate;
-            }
-            return true;
-        }
-
-        /**
-         * Remove callbacks which operate one time;
-         * @private
-         */
-
-    }, {
-        key: '_removeOnes',
-        value: function _removeOnes() {
-            _lodash2.default.remove(this._callbacks, 'ones');
-        }
-
-        /**
-         *
-         * @param {Array} names
-         * @param {Array} results
-         * @return {Object}
-         * @private
-         */
-
-    }, {
-        key: '_makeResultObject',
-        value: function _makeResultObject(names, results) {
-            var resultObject = {};
-            _lodash2.default.forEach(results, function (result, index) {
-                resultObject[names[index]] = result;
-            });
-            return resultObject;
-        }
-
-        /**
-         *
-         * @param callback
-         * @param myBind
-         * @param myArguments
-         * @private
-         */
-
-    }, {
-        key: '_makePromise',
-        value: function _makePromise(callback, myBind, myArguments) {
-            return function () {
-                return new Promise(function (resolve, reject) {
-                    var result = null;
-                    try {
-                        //Execute One
-                        result = callback.callback.apply(myBind, myArguments);
-                    } catch (reason) {
-                        reason.name = callback.name;
-                        reject(reason);
-                    }
-                    resolve(result);
-                });
-            }();
-        }
-
-        /**
-         *
-         * @return {*}
-         * @private
-         */
-
-    }, {
-        key: '_AsyncCallback',
-        value: function _AsyncCallback() {
-            return {
-                thenList: [],
-                catchList: [],
-                then: function then(callback) {
-                    this.thenList.push(callback);
-                    return this;
-                },
-                catch: function _catch(callback) {
-                    this.catchList.push(callback);
-                    return this;
-                },
-                _result: function _result(results) {
-                    if (this.thenList.length > 0) {
-                        this.thenList.shift()(results);
-                    }
-                },
-                _reject: function _reject(reason) {
-                    if (this.catchList.length > 0) {
-                        this.catchList.shift()(reason);
-                    }
-                }
-            };
-        }
-    }, {
-        key: 'defaultOperate',
-        set: function set(operate) {
-            if (_lodash2.default.isBoolean(operate)) {
-                this.defaultOperate = operate;
-            }
-        }
-
-        /**
-         * Get Callbacks
-         * @returns {Array} See this._callbacks
-         */
-
-    }, {
-        key: 'show',
-        get: function get() {
-            return this._callbacks;
-        }
-    }]);
-
-    return Waiter;
-}();
-
-exports.default = Waiter;
-
-/***/ }),
-/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10022,7 +9505,7 @@ LazyWrapper.prototype.clone=lazyClone;LazyWrapper.prototype.reverse=lazyReverse;
 lodash.prototype.at=wrapperAt;lodash.prototype.chain=wrapperChain;lodash.prototype.commit=wrapperCommit;lodash.prototype.next=wrapperNext;lodash.prototype.plant=wrapperPlant;lodash.prototype.reverse=wrapperReverse;lodash.prototype.toJSON=lodash.prototype.valueOf=lodash.prototype.value=wrapperValue;// Add lazy aliases.
 lodash.prototype.first=lodash.prototype.head;if(symIterator){lodash.prototype[symIterator]=wrapperToIterator;}return lodash;};/*--------------------------------------------------------------------------*/// Export lodash.
 var _=runInContext();// Some AMD build optimizers, like r.js, check for condition patterns like:
-if("function"=='function'&&_typeof(__webpack_require__(0))=='object'&&__webpack_require__(0)){// Expose Lodash on the global object to prevent errors when Lodash is
+if("function"=='function'&&_typeof(__webpack_require__(2))=='object'&&__webpack_require__(2)){// Expose Lodash on the global object to prevent errors when Lodash is
 // loaded by a script tag in the presence of an AMD loader.
 // See http://requirejs.org/docs/errors.html#mismatch for more details.
 // Use `_.noConflict` to remove Lodash from the global object.
@@ -10034,10 +9517,385 @@ else if(freeModule){// Export for Node.js.
 (freeModule.exports=_)._=_;// Export for CommonJS support.
 freeExports._=_;}else{// Export to the global object.
 root._=_;}}).call(undefined);
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(4)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(4), __webpack_require__(5)(module)))
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); //eslint-disable-next-line max-lines
+
+
+var _lodash = __webpack_require__(0);
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Waiter = function () {
+    function Waiter() {
+        _classCallCheck(this, Waiter);
+
+        /**
+         * Objects which have one callbacks and etc.
+         * @type {Array}
+         * @private
+         */
+        this._handlerData = [];
+        /**
+         *
+         * @type {Array}
+         * @private
+         */
+        this._arguments = [];
+        /**
+         *
+         * @type {Object | null}
+         * @private
+         */
+        this._bind = null;
+        /**
+         *
+         * @type {boolean}
+         * @private
+         */
+        this._defaultOperate = true;
+    }
+
+    /**
+     * @return {Array}
+     * @protected
+     */
+
+
+    _createClass(Waiter, [{
+        key: 'execute',
+
+
+        /**
+         * Execute handlers
+         * @param {{ handler_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}} options Set how to deal each callback objects
+         * @returns {{handler_name1: *, handler_name1: *, ...}} return results
+         */
+        value: function execute() {
+            var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+            //Make Object to contain returning results with callback names
+            var returnObject = {};
+
+            //Execute all this._callbacks
+            _lodash2.default.forEach(this._handlerData, function (callbackObject) {
+                var name = callbackObject.name,
+                    option = options[name];
+                //If It should execute by option.
+                if (this._isExecute(options, name)) {
+                    returnObject[name] = callbackObject.callback.apply(this._assembleBind(callbackObject, option), this._pickArguments(callbackObject, option));
+                }
+                //Continue
+                return true;
+            }.bind(this));
+
+            //Remove execute only things..
+            this._removeOnes();
+
+            //return results
+            return returnObject;
+        }
+
+        /**
+         * Save many handlers
+         * @param {{handler_name: {handler: Function, [ones]: Boolean, [bind]: Object, [arguments]: Array}, ...}} objects
+         * @returns {boolean}
+         */
+
+    }, {
+        key: 'saveMany',
+        value: function saveMany(objects) {
+            if (!_lodash2.default.isObject(objects)) {
+                return false;
+            }
+
+            _lodash2.default.forEach(objects, function (value, key) {
+                value.name = key;
+                this.save(value);
+            }.bind(this));
+
+            return true;
+        }
+
+        /**
+         * Save one handler
+         * @returns {boolean} Save or not
+         * @param {{handler: Function, name: String, [ones]: Boolean, [bind]: Object, [arguments]: Array}} object
+         */
+
+    }, {
+        key: 'save',
+        value: function save(object) {
+            if (!_lodash2.default.isObject(object)) {
+                return false;
+            }
+
+            if (!_lodash2.default.isFunction(object.handler)) {
+                return false;
+            }
+
+            if (!_lodash2.default.isString(object.name)) {
+                return false;
+            }
+
+            this._handlerData.push({
+                name: object.name,
+                callback: object.handler,
+                ones: _lodash2.default.isBoolean(object.ones) ? object.ones : false,
+                bind: _lodash2.default.isObject(object.bind) ? object.bind : null,
+                arguments: _lodash2.default.isArray(object.arguments) ? object.arguments : null,
+                promise: null
+            });
+            return true;
+        }
+
+        /**
+         * Remove name of handler
+         * @param {String} name
+         */
+
+    }, {
+        key: 'remove',
+        value: function remove(name) {
+            return _lodash2.default.remove(this._handlerData, function (value) {
+                return value.name === name;
+            });
+        }
+
+        /**
+         * Register bind
+         * @param {Object} my_bind_object
+         */
+
+    }, {
+        key: 'bind',
+        value: function bind(my_bind_object) {
+            if (_lodash2.default.isObject(my_bind_object)) {
+                this._bind = my_bind_object;
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Register arguments
+         * @param {Array} argumentsArray
+         */
+
+    }, {
+        key: 'arguments',
+        value: function _arguments(argumentsArray) {
+            if (_lodash2.default.isArray(argumentsArray)) {
+                this._arguments = argumentsArray;
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * Remove all handlers
+         * @return {Boolean}
+         */
+
+    }, {
+        key: 'clear',
+        value: function clear() {
+            return _lodash2.default.remove(this._handlerData, function () {
+                return true;
+            });
+        }
+
+        /**
+         * Assemble Bind all this bind, handler bind and option bind
+         * @param {Object} own
+         * @param {Object} options
+         * @return {Object}
+         * @protected
+         */
+
+    }, {
+        key: '_assembleBind',
+        value: function _assembleBind() {
+            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+            var myBind = {};
+
+            if (_lodash2.default.isObject(this._bind)) {
+                _lodash2.default.forEach(this._bind, function (value, name) {
+                    myBind[name] = value;
+                });
+            }
+
+            if (_lodash2.default.isObject(own.bind)) {
+                _lodash2.default.forEach(own.bind, function (value, name) {
+                    myBind[name] = value;
+                });
+            }
+
+            if (_lodash2.default.isObject(options.bind)) {
+                _lodash2.default.forEach(options.bind, function (value, name) {
+                    myBind[name] = value;
+                });
+            }
+
+            return myBind;
+        }
+
+        /**
+         * Pick one of arguments from this arguments, handler arguments, option arguments and add additionalArguments
+         * @param {Object} own
+         * @param {Object} options
+         * @return {*}
+         * @protected
+         */
+
+    }, {
+        key: '_pickArguments',
+        value: function _pickArguments() {
+            var own = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+            var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+            var myArgument = void 0;
+
+            if (_lodash2.default.isArray(options.arguments)) {
+                myArgument = options.arguments;
+            } else if (_lodash2.default.isArray(own.arguments)) {
+                myArgument = own.arguments;
+            } else {
+                myArgument = this._arguments;
+            }
+
+            if (_lodash2.default.isArray(options.additionalArguments)) {
+                myArgument = _lodash2.default.union(myArgument, options.additionalArguments);
+            }
+
+            return myArgument;
+        }
+
+        /**
+         * Should execute or not
+         * @param {Object} options
+         * @param {String} name
+         * @return {boolean}
+         * @protected
+         */
+
+    }, {
+        key: '_isExecute',
+        value: function _isExecute(options, name) {
+            if (_lodash2.default.isObject(options)) {
+                if (_lodash2.default.isObject(options[name])) {
+                    if (_lodash2.default.isBoolean(options[name].operate) && options[name].operate) {
+                        return true;
+                    } else if (!_lodash2.default.isBoolean(options[name].operate)) {
+                        return this._defaultOperate;
+                    }
+                    return false;
+                }
+                return this._defaultOperate;
+            }
+            return true;
+        }
+
+        /**
+         * Remove callbacks which should operate one time;
+         * @protected
+         */
+
+    }, {
+        key: '_removeOnes',
+        value: function _removeOnes() {
+            _lodash2.default.remove(this._handlerData, 'ones');
+        }
+    }, {
+        key: '_handlers',
+        get: function get() {
+            return this._handlerData;
+        }
+
+        /**
+         * @param {Object} operate
+         */
+
+    }, {
+        key: 'defaultOperate',
+        set: function set(operate) {
+            if (_lodash2.default.isBoolean(operate)) {
+                this.defaultOperate = operate;
+            }
+        }
+
+        /**
+         * Get Callbacks
+         * @returns {Array} See this._callbacks
+         */
+
+    }, {
+        key: 'show',
+        get: function get() {
+            return this._handlerData;
+        }
+    }]);
+
+    return Waiter;
+}();
+
+exports.default = Waiter;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
+module.exports = __webpack_amd_options__;
+
+/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.WaiterAsync = exports.Waiter = undefined;
+
+var _Waiter = __webpack_require__(1);
+
+var _Waiter2 = _interopRequireDefault(_Waiter);
+
+var _WaiterAsync = __webpack_require__(6);
+
+var _WaiterAsync2 = _interopRequireDefault(_WaiterAsync);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.Waiter = _Waiter2.default;
+exports.WaiterAsync = _WaiterAsync2.default;
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10067,7 +9925,7 @@ try {
 module.exports = g;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10097,48 +9955,269 @@ module.exports = function (module) {
 };
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _app = __webpack_require__(1);
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 
-var _app2 = _interopRequireDefault(_app);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _lodash = __webpack_require__(0);
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _Waiter2 = __webpack_require__(1);
+
+var _Waiter3 = _interopRequireDefault(_Waiter2);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var waiter = new _app2.default();
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var WaiterAsync = function (_Waiter) {
+    _inherits(WaiterAsync, _Waiter);
+
+    function WaiterAsync() {
+        _classCallCheck(this, WaiterAsync);
+
+        return _possibleConstructorReturn(this, (WaiterAsync.__proto__ || Object.getPrototypeOf(WaiterAsync)).apply(this, arguments));
+    }
+
+    _createClass(WaiterAsync, [{
+        key: 'executeAsync',
+
+
+        /**
+         * Execute all asynchronously. Results will be returned with callbacks.then
+         * @param {[{ callback_name : { [bind : Object, [arguments]: Array}, [additionalArguments]: Array, [operate]: Boolean, ...}, ...]} options Set how to deal each callback objects
+         *              Or can be an object
+         * @return {{then : Function, catch : Function, _result : Function, _reject : Function}} callback chain
+         */
+        value: function executeAsync(options) {
+            var _this2 = this;
+
+            var callbacks = this._AsyncCallback();
+            var groups = void 0;
+
+            if (_lodash2.default.isArray(options)) {
+                groups = options;
+            } else if (_lodash2.default.isObject(options)) {
+                groups = [options];
+            } else {
+                throw new Error('options must be Array or object');
+            }
+
+            //Make async function to execute all this._callbacks
+            //eslint-disable-next-line one-var
+            var async = async function async() {
+                //Promises to add in Promise.all to execute all asynchronously
+                var _groups = groups,
+                    length = _groups.length,
+                    results = [];
+
+                var _loop = async function _loop(i) {
+                    //For returning result names
+                    var keys = [],
+                        myOption = groups[i],
+                        promises = [];
+                    var result = void 0;
+                    _lodash2.default.forEach(_this2._handlers, function (callbackObject) {
+                        var name = callbackObject.name,
+                            option = myOption[name];
+                        //If It should execute by option.
+                        if (_this2._isExecute(myOption, name)) {
+
+                            //Save keys for returning results
+                            keys.push(name);
+
+                            //Checks if a callback needs to make new promise or not
+                            var refresh = false;
+                            if (_lodash2.default.isNil(callbackObject.promise)) {
+                                refresh = true;
+                            } else if (_lodash2.default.isObject(option)) {
+                                if (_lodash2.default.isObject(option.bind) || _lodash2.default.isObject(option.arguments)) {
+                                    refresh = true;
+                                }
+                            }
+                            if (refresh) {
+                                //Make and push Promise
+                                callbackObject.promise = _this2._makePromise(callbackObject, _this2._assembleBind(callbackObject, option), _this2._pickArguments(callbackObject, option));
+                                promises.push(callbackObject.promise);
+                            } else {
+                                promises.push(callbackObject.promise);
+                            }
+                        }
+                    });
+                    //eslint-disable-next-line no-await-in-loop
+                    await Promise.all(promises).catch(function (reason) {
+                        return callbacks._reject(reason);
+                    }).then(function (result) {
+                        var myResult = _this2._makeResultObject(keys, result);
+                        results.push(myResult);
+                        callbacks._result(myResult);
+                    });
+                };
+
+                for (var i = 0; i < length; i += 1) {
+                    await _loop(i);
+                }
+                return results;
+            };
+
+            //Execute all
+            async().then(function (results) {
+                return callbacks._conclude(results);
+            });
+            //Remove doing ones ro etc
+            this._removeOnes();
+            return callbacks;
+        }
+
+        /**
+         *
+         * @param callback
+         * @param myBind
+         * @param myArguments
+         * @private
+         */
+        //eslint-disable-next-line class-methods-use-this
+
+    }, {
+        key: '_makePromise',
+        value: function _makePromise(callback, myBind, myArguments) {
+            return function () {
+                return new Promise(function (resolve, reject) {
+                    var result = null;
+                    try {
+                        //Execute One
+                        result = callback.callback.apply(myBind, myArguments);
+                    } catch (reason) {
+                        reason.name = callback.name;
+                        reject(reason);
+                    }
+                    resolve(result);
+                });
+            }();
+        }
+
+        /**
+         *
+         * @param {Array} names
+         * @param {Array} results
+         * @return {Object}
+         * @private
+         */
+        //eslint-disable-next-line class-methods-use-this
+
+    }, {
+        key: '_makeResultObject',
+        value: function _makeResultObject(names, results) {
+            var resultObject = {};
+            _lodash2.default.forEach(results, function (result, index) {
+                resultObject[names[index]] = result;
+            });
+            return resultObject;
+        }
+
+        /**
+         *
+         * @return {*}
+         * @private
+         */
+        //eslint-disable-next-line class-methods-use-this
+
+    }, {
+        key: '_AsyncCallback',
+        value: function _AsyncCallback() {
+            return {
+                thenList: [],
+                catchList: [],
+                concludeCallback: null,
+                then: function then(callback) {
+                    this.thenList.push(callback);
+                    return this;
+                },
+                catch: function _catch(callback) {
+                    this.catchList.push(callback);
+                    return this;
+                },
+                final: function final(callback) {
+                    if (_lodash2.default.isFunction(callback)) {
+                        this.concludeCallback = callback;
+                    }
+                },
+                _result: function _result(result) {
+                    if (this.thenList.length > 0) {
+                        this.thenList.shift()(result);
+                    }
+                },
+                _reject: function _reject(reason) {
+                    if (this.catchList.length > 0) {
+                        this.catchList.shift()(reason);
+                    }
+                },
+                _conclude: function _conclude(results) {
+                    if (_lodash2.default.isFunction(this.concludeCallback)) {
+                        this.concludeCallback(results);
+                    }
+                }
+            };
+        }
+    }]);
+
+    return WaiterAsync;
+}(_Waiter3.default);
+
+exports.default = WaiterAsync;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _app = __webpack_require__(3);
+
+var waiter = new _app.WaiterAsync();
 
 //eslint-disable-next-line one-var
 /*eslint-disable comma-dangle */
-var callbacks = {
+waiter.saveMany({
     sayHello: {
-        callback: function callback() {
+        handler: function handler() {
             return 'Hello';
         }
     },
     sayHelloOnes: {
-        callback: function callback() {
+        handler: function handler() {
             return 'Hello';
         },
 
         ones: true
     },
     sayHelloWithOperateFalseOption: {
-        callback: function callback() {
+        handler: function handler() {
             //it won't say hello
             return 'Hello';
         }
     },
     sayHelloGlobalBind: {
-        callback: function callback() {
+        handler: function handler() {
             return 'Hello ' + this.name;
         }
     },
     sayHelloLocalBind: {
-        callback: function callback() {
+        handler: function handler() {
             return 'Hello ' + this.name_local;
         },
 
@@ -10147,40 +10226,38 @@ var callbacks = {
         }
     },
     sayHelloGlobalArguments: {
-        callback: function callback(name) {
+        handler: function handler(name) {
             return 'Hello ' + name;
         }
     },
     sayHelloLoLocalArguments: {
-        callback: function callback(name1, name2) {
+        handler: function handler(name1, name2) {
             return 'hello ' + name1 + ', ' + name2;
         },
 
         arguments: ['Local argument 1', 'Local argument 2']
     },
     sayHelloExecuteBind: {
-        callback: function callback() {
+        handler: function handler() {
             return 'Hello ' + this.name;
         }
     },
     sayHelloExecuteArguments: {
-        callback: function callback(name) {
+        handler: function handler(name) {
             return 'Hello ' + name;
         }
     },
     sayHelloExecuteAdditionalArguments: {
-        callback: function callback(GlobalName, additionalName) {
+        handler: function handler(GlobalName, additionalName) {
             return 'Hello ' + GlobalName + ', ' + additionalName;
         }
     },
     sayHelloError: {
-        callback: function callback() {
+        handler: function handler() {
             //throw new Error('Hello');
         }
     }
-};
-
-waiter.saveMany(callbacks);
+});
 
 //this is global bind
 waiter.bind({
@@ -10226,14 +10303,17 @@ var options = [option, {
 
 //window.console.log(waiter.execute(option));
 
-waiter.executeAsync(option).then(function (result) {
-    window.console.log(result);
-}).catch(function (reason) {
-    window.console.log(reason);
-    window.console.log(reason.name);
-}).then(function (result) {
-    window.console.log(result);
-});
+/*waiter.executeAsync(option)
+    .then((result) => {
+        window.console.log(result)
+    })
+    .catch((reason) => {
+        window.console.log(reason);
+        window.console.log(reason.name);
+    })
+    .then((result) => {
+        window.console.log(result)
+    });*/
 
 waiter.executeAsync(options).then(function (result) {
     window.console.log(result);
@@ -10242,6 +10322,8 @@ waiter.executeAsync(options).then(function (result) {
     window.console.log(reason.name);
 }).then(function (result) {
     window.console.log(result);
+}).final(function (results) {
+    window.console.log(results);
 });
 
 /*waiter.executeAsync(option, (result) => {

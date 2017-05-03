@@ -1,6 +1,6 @@
 /.idea
 /src
-/test
+/testWeb
 /node_modules
 .babelrc
 .eslintrc.js
